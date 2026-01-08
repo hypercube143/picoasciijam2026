@@ -194,8 +194,8 @@ function co(x, y, w, h, texture, id)
                             sprite.colour = 10
                             otherSprite.colour = 14
                         end
-                        print(sprite.id .. "collided with" .. otherSprite.id)
-                        break
+                        -- print(sprite.id .. "collided with" .. otherSprite.id)
+                        -- break
                     end
                 end
             end
