@@ -139,7 +139,7 @@ function co(x, y, w, h, texture, id)
         id = id,
         draw = function()
             for sprite in all(texture) do
-                print(sprite.str, self.x + sprite.w * sprite.x, self.y + sprite.h * sprite.y, sprite.colour)
+                print(sprite.str, x + sprite.w * sprite.x, y + sprite.h * sprite.y, sprite.colour)
             end
 
         end,
