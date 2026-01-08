@@ -6,31 +6,78 @@ __lua__
 -- p = "🐱\n웃"
 -- weed_tree = "★\n★\n★"
 
+-- CURR_SCENE
+-- p
+
 function _init()
-    p = newPlayer(50, 50)
+    CURR_SCENE = startMenu()
 end
 
 function _update60()
-    p.update()
+   CURR_SCENE.update()
 end
 
 function _draw()
     cls()
-    --print(p .. " " .. weed_tree)
-    p.draw()
+    CURR_SCENE.draw()
 end
------
 
+----- PLAYER
 function newPlayer(x, y)
     return{
-        str = "🐱\n웃",
-        col = 7,
+        -- str = " 🐱\n(웃",
+        -- col = 7,
+        sprite = co(x, y, 8, 8, playerTexture(), "player"),
         x = x,
         y = y,
+        speed = 1,
         draw = function() print(p.str, p.x, p.y, p.col) end,
-        update = function() end
+        update = function()
+            movePlayer()
+            
+        end
     }
 end
+
+function playerTexture()
+    return{
+        t(s("🐱", 7, "head"), {0,0})
+    }
+end
+
+
+function movePlayer()
+    if btn(⬅️) then p.x -= p.speed end
+    if btn(➡️) then p.x += p.speed end
+    if btn(⬆️) then p.y -= p.speed end
+    if btn(⬇️) then p.y += p.speed end
+end
+
+---- LEVELS
+function startMenu()
+    return{
+        update = function()
+            if btn(❎) then CURR_SCENE = levelOne() end
+        end,
+        draw = function() 
+            print("press x")
+        end
+    }
+end
+
+function levelOne()
+    -- init occurs once level is loaded, hence no funciton:
+    p = newPlayer(50, 50)
+    return{
+        update = function()
+            p.update()
+        end,
+        draw = function()
+            p.draw()
+        end
+    }
+end
+-----
 
 
 
