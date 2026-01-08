@@ -22,7 +22,7 @@ function _init()
 end
 
 function _update60()
-   CURR_SCENE.update()
+   --CURR_SCENE.update()
 end
 
 function _draw()
@@ -92,29 +92,33 @@ end
 
 function s(str, colour, id)
     return {
-        str, colour,
+        str = str, colour = colour,
         width = 8, hieght = 8,
-        globalX, globalY,
-        id
+        globalX = nil, globalY = nil,
+        id = id
     }
+end
+
 
 -- texture
 function t(sprite, pos)
     return {
-        sprite, pos
+        sprite = sprite, pos = pos
     }
+end
+
 
 -- collisionObject
 function co(x, y, w, h, texture, id) 
     return {
-        x, y, w, h,
-        texture,
-        id,
+        x = x, y = y, w = w, h = h,
+        texture = texture,
+        id = id,
         draw = function()
             for tx in all(mega_tx) do
                 sprite = tx.sprite
                 sprite_str = sprite.str
-                sprites_col = sprite.col
+                sprites_col = sprite.colour
                 sprite_w = sprite.width
                 sprite_h = sprite.height
                 pos = tx.pos
@@ -124,6 +128,7 @@ function co(x, y, w, h, texture, id)
         end,
         update = function() end
     }
+end
 
 
 --[[
