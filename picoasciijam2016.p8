@@ -10,58 +10,80 @@ __lua__
 -- p
 
 function _init()
-    --CURR_SCENE = startMenu()
-    p = newPlayer(50, 50)
+    CURR_SCENE = startMenu()
+    -- p = newPlayer(50, 50)
 
-        -- example of a full texture
-    mega_tx = {
-        s("x", 7, 0, 0, "head"),
-        s("x", 7, 0, 1, "body"),
-    }
-    thingy = co(0, 0, 0, 0, mega_tx, "thingy")
+    --     -- example of a full texture
+    -- mega_tx = {
+    --     s("x", 7, 0, 0, "head"),
+    --     s("x", 7, 0, 1, "body"),
+    -- }
+    -- thingy = co(0, 0, 0, 0, mega_tx, "thingy")
 end
 
 function _update60()
-   --CURR_SCENE.update()
+   CURR_SCENE.update()
 end
 
 function _draw()
     cls()
-    --CURR_SCENE.draw()
+    CURR_SCENE.draw()
     --print(p .. " " .. weed_tree)
-    p.draw()
-    thingy.draw()
+    -- p.draw()
+    -- thingy.draw()
 end
 
 ----- PLAYER
 function newPlayer(x, y)
+    local texture = {
+            s("🐱", 7, 0, 0 , "head"),
+            s("웃", 7, 0, 1, "body")
+        }
     return{
         -- str = " 🐱\n(웃",
         -- col = 7,
-        sprite = co(x, y, 8, 8, playerTexture(), "player"),
+        spr = co(x, y, 8, 8, texture, "player"),
         x = x,
         y = y,
         speed = 1,
-        draw = function() print(p.str, p.x, p.y, p.col) end,
+        draw = function() 
+            p.spr.draw()
+            print("player: " .. p.x.. ", " .. p.y) 
+        end,
         update = function()
             movePlayer()
             
-        end
+        end,
+
+        
     }
 end
 
-function playerTexture()
-    return{
-        t(s("🐱", 7, "head"), {0,0})
-    }
-end
+-- function playerTexture()
+--     return{
+--         s("🐱", 7, 0, 0 , "head"),
+--         s("웃", 7, 0, 1, "body")
+--     }
+-- end
 
 
 function movePlayer()
-    if btn(⬅️) then p.x -= p.speed end
-    if btn(➡️) then p.x += p.speed end
-    if btn(⬆️) then p.y -= p.speed end
-    if btn(⬇️) then p.y += p.speed end
+    if btn(⬅️) then 
+        p.x -= p.speed 
+        p.spr.x = p.x
+    end
+    if btn(➡️) then 
+        p.x += p.speed 
+        p.spr.x = p.x
+    end
+    if btn(⬆️) then 
+        p.y -= p.speed 
+        p.spr.y = p.y
+    end
+    if btn(⬇️) then 
+        p.y += p.speed 
+        p.spr.y = p.y
+    end
 end
 
 ---- LEVELS
@@ -84,7 +106,7 @@ function levelOne()
             p.update()
         end,
         draw = function()
-            p.draw()
+            p.draw( )
         end
     }
 end
@@ -116,8 +138,8 @@ function co(x, y, w, h, texture, id)
         texture = texture,
         id = id,
         draw = function()
-            for sprite in all(mega_tx) do
-                print(sprite.str, x + sprite.w * sprite.x, y + sprite.h * sprite.y, sprite.colour)
+            for sprite in all(texture) do
+                print(sprite.str, self.x + sprite.w * sprite.x, self.y + sprite.h * sprite.y, sprite.colour)
             end
 
         end,
