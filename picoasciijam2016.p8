@@ -90,11 +90,12 @@ function levelOne()
 end
 -----
 
-function s(str, colour, x, y, id)
+function s(str, colour, x, y, offX, offY, id)
     return {
         str = str, colour = colour,
         w = 8, h = 8,
         x = x, y = y,
+        offX = offX, offY = offY,
         globalX = nil, globalY = nil,
         id = id,
     }
@@ -117,7 +118,7 @@ function co(x, y, w, h, texture, id)
         id = id,
         draw = function()
             for sprite in all(mega_tx) do
-                print(sprite.str, x + sprite.w * sprite.x, y + sprite.h * sprite.y, sprite.colour)
+                print(sprite.str, x + sprite.w * sprite.x + sprite.offX, y + sprite.h * sprite.y + sprite.offY, sprite.colour)
             end
 
         end,
