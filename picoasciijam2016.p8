@@ -3,15 +3,28 @@ version 41
 __lua__
 --1337 420 8)
 -- vorp
--- p = "🐱\n웃" 
--- weed_tree = "★\n★\n★"
 
--- CURR_SCENE
--- p
+-- notes
+--[[
+screen is 128 px hence 16 by 16
+
+--]]
+
+
+-- TEMP THINGS
+
+
+-- DEBUG THINGS
+debug = "debug: "
+
+-- GAME THINGS
+t = 0
+entities = {} -- eg collidable
+map_tiles = {} -- eg collidable
 
 function _init()
+    t = 0
     CURR_SCENE = startMenu()
-    -- p = newPlayer(50, 50)
 
     -- example of a full texture
     mega_tx = {
@@ -38,10 +51,12 @@ end
 
 function _draw()
     cls()
+    debug = "debug: "
+
     CURR_SCENE.draw()
-    --print(p .. " " .. weed_tree)
-    -- p.draw()
-    -- thingy.draw()
+
+    --- DEBUG PRINT
+    print(debug, 2, 2, 7)
 end
 
 ----- PLAYER
@@ -60,7 +75,6 @@ function newPlayer(x, y)
         speed = 1,
         draw = function() 
             p.spr.draw(p.x, p.y)
-            --print("player: " .. p.x.. ", " .. p.y) 
         end,
         update = function()
             movePlayer()
@@ -72,30 +86,19 @@ function newPlayer(x, y)
     }
 end
 
--- function playerTexture()
---     return{
---         s("🐱", 7, 0, 0 , "head"),
---         s("웃", 7, 0, 1, "body")
---     }
--- end
-
 
 function movePlayer()
     if btn(⬅️) then 
         p.x -= p.speed 
-        --p.spr.x = p.x
     end
     if btn(➡️) then 
         p.x += p.speed 
-        --p.spr.x = p.x
     end
     if btn(⬆️) then 
         p.y -= p.speed 
-        --p.spr.y = p.y
     end
     if btn(⬇️) then 
         p.y += p.speed 
-        --p.spr.y = p.y
     end
 end
 
@@ -114,15 +117,52 @@ end
 function levelOne()
     -- init occurs once level is loaded, hence no funciton:
     p = newPlayer(50, 50)
+    t = 0
     return{
         update = function()
             p.update()
+            t += 1
         end,
         draw = function()
-            p.draw( )
+            drawGrid("❎", "♥")
+            p.draw()
             weed_tree.draw(90, 90)
+
+            ---
+            debug = debug .."tick: " .. t
         end
     }
+end
+
+function drawGrid(border, fill)
+    -- this for loop makes the game super laggy!???
+    -- print(border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. "\n", 0, 0, 7)
+    -- for i = 0, 14 do
+    --     print(border .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. border .. "\n")
+    -- end
+    -- print(border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. "\n")
+
+    outer_row = border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. "\n"
+    inner_row = border .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. border .. "\n"
+    
+    print(outer_row ..
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row ..    
+    outer_row
+    , 0, 0, 6)
+
 end
 -----
 
