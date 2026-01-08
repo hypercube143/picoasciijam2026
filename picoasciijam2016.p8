@@ -36,8 +36,9 @@ end
 ----- PLAYER
 function newPlayer(x, y)
     local texture = {
-            s("🐱", 7, 0, 0 , "head"),
-            s("웃", 7, 0, 1, "body")
+            s("🐱", 7, 0, 0, 0, 4, "head"),
+            s("웃", 7, 0, 1, 0, 0, "body"),
+            s("L", 6, 0, 1, -1, -1, "tail")
         }
     return{
         -- str = " 🐱\n(웃",
@@ -47,8 +48,8 @@ function newPlayer(x, y)
         y = y,
         speed = 1,
         draw = function() 
-            p.spr.draw()
-            print("player: " .. p.x.. ", " .. p.y) 
+            p.spr.draw(p.x, p.y)
+            --print("player: " .. p.x.. ", " .. p.y) 
         end,
         update = function()
             movePlayer()
@@ -70,19 +71,19 @@ end
 function movePlayer()
     if btn(⬅️) then 
         p.x -= p.speed 
-        p.spr.x = p.x
+        --p.spr.x = p.x
     end
     if btn(➡️) then 
         p.x += p.speed 
-        p.spr.x = p.x
+        --p.spr.x = p.x
     end
     if btn(⬆️) then 
         p.y -= p.speed 
-        p.spr.y = p.y
+        --p.spr.y = p.y
     end
     if btn(⬇️) then 
         p.y += p.speed 
-        p.spr.y = p.y
+        --p.spr.y = p.y
     end
 end
 
@@ -112,11 +113,12 @@ function levelOne()
 end
 -----
 
-function s(str, colour, x, y, id)
+function s(str, colour, x, y, offX, offY, id)
     return {
         str = str, colour = colour,
         w = 8, h = 8,
         x = x, y = y,
+        offX = offX, offY = offY,
         globalX = nil, globalY = nil,
         id = id,
     }
@@ -137,9 +139,9 @@ function co(x, y, w, h, texture, id)
         x = x, y = y, w = w, h = h,
         texture = texture,
         id = id,
-        draw = function()
+        draw = function(x, y)
             for sprite in all(texture) do
-                print(sprite.str, x + sprite.w * sprite.x, y + sprite.h * sprite.y, sprite.colour)
+                print(sprite.str, x + sprite.w * sprite.x + sprite.offX, y + sprite.h * sprite.y + sprite.offY, sprite.colour)
             end
 
         end,
