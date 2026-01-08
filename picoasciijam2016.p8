@@ -15,8 +15,8 @@ function _init()
 
         -- example of a full texture
     mega_tx = {
-        t(s("x", 7, "head"), {0, 0}),
-        t(s("x", 7, "body"), {0, 1})
+        s("x", 7, 0, 0, "head"),
+        s("x", 7, 0, 1, "body"),
     }
     thingy = co(0, 0, 0, 0, mega_tx, "thingy")
 end
@@ -90,22 +90,23 @@ function levelOne()
 end
 -----
 
-function s(str, colour, id)
+function s(str, colour, x, y, id)
     return {
         str = str, colour = colour,
-        width = 8, hieght = 8,
+        w = 8, h = 8,
+        x = x, y = y,
         globalX = nil, globalY = nil,
-        id = id
+        id = id,
     }
 end
 
 
 -- texture
-function t(sprite, pos)
-    return {
-        sprite = sprite, pos = pos
-    }
-end
+-- function t(sprite, pos)
+--     return {
+--         sprite = sprite, pos = pos
+--     }
+-- end
 
 
 -- collisionObject
@@ -115,14 +116,8 @@ function co(x, y, w, h, texture, id)
         texture = texture,
         id = id,
         draw = function()
-            for tx in all(mega_tx) do
-                sprite = tx.sprite
-                sprite_str = sprite.str
-                sprites_col = sprite.colour
-                sprite_w = sprite.width
-                sprite_h = sprite.height
-                pos = tx.pos
-                print(sprite_str, x + sprite_w * pos[0], y + sprite_h * pos[1], sprite.colour)
+            for sprite in all(mega_tx) do
+                print(sprite.str, x + sprite.w * sprite.x, y + sprite.h * sprite.y, sprite.colour)
             end
 
         end,
