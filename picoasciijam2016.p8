@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 43
+version 41
 __lua__
 --1337 420 8)
 -- vorp
@@ -13,12 +13,12 @@ function _init()
     CURR_SCENE = startMenu()
     -- p = newPlayer(50, 50)
 
-    --     -- example of a full texture
-    -- mega_tx = {
-    --     s("x", 7, 0, 0, "head"),
-    --     s("x", 7, 0, 1, "body"),
-    -- }
-    -- thingy = co(0, 0, 0, 0, mega_tx, "thingy")
+    -- example of a full texture
+    mega_tx = {
+        s("x", 7, 0, 0, 3, 2, "part 1"),
+        s("x", 7, 0, 1, 3, 2, "part 2"),
+    }
+    thingy = co(0, 0, 0, 0, mega_tx, "thingy")
 end
 
 function _update60()
@@ -53,7 +53,8 @@ function newPlayer(x, y)
         end,
         update = function()
             movePlayer()
-            
+            -- check if player colliding - potentially make this a list and for loop later?
+            p.spr.collisionCheck(thingy)
         end,
 
         
@@ -108,6 +109,7 @@ function levelOne()
         end,
         draw = function()
             p.draw( )
+            thingy.draw(90, 90)
         end
     }
 end
@@ -119,7 +121,7 @@ function s(str, colour, x, y, offX, offY, id)
         w = 8, h = 8,
         x = x, y = y,
         offX = offX, offY = offY,
-        globalX = nil, globalY = nil,
+        globalX = x, globalY = y,
         id = id,
     }
 end
@@ -132,23 +134,69 @@ end
 --     }
 -- end
 
-
+debugCollisions = true
 -- collisionObject
 function co(x, y, w, h, texture, id) 
     return {
         x = x, y = y, w = w, h = h,
         texture = texture,
         id = id,
+        -- draw texture to screen based on x, y pos
         draw = function(x, y)
+            x = x
+            y = y
             for sprite in all(texture) do
-                print(sprite.str, x + sprite.w * sprite.x + sprite.offX, y + sprite.h * sprite.y + sprite.offY, sprite.colour)
+                sprite_x = x + sprite.w * sprite.x
+                sprite_y = y + sprite.h * sprite.y
+                sprite.globalX = sprite_x
+                sprite.globalY = sprite_y
+                -- display red box around collisions if debugging mode active
+                if debugCollisions then
+                    rect(sprite_x, sprite_y, sprite_x + sprite.w, sprite_y + sprite.h, 8)
+                end
+                print(sprite.str, sprite_x + sprite.offX, sprite_y + sprite.offY, sprite.colour)
             end
 
+        end,
+        -- update collisions
+        collisionCheck = function(other)
+            collides = false
+            for sprite in all(texture) do 
+                for otherSprite in all(other.texture) do
+
+                    l1 = sprite.globalX
+                    r1 = sprite.globalX + sprite.w
+                    t1 = sprite.globalY
+                    b1 = sprite.globalY + sprite.h
+
+                    l2 = otherSprite.globalX
+                    r2 = otherSprite.globalX + otherSprite.w
+                    t2 = otherSprite.globalY
+                    b2 = otherSprite.globalY + otherSprite.h
+
+                    collides = (l1<r2 and r1>l2) and (t1<b2 and b1>t2)
+                    
+                    if collides then
+                        -- if debug collisions, sprites turn yellow and pink when collision happens
+                        if debugCollisions then
+                            sprite.colour = 10
+                            otherSprite.colour = 14
+                        end
+                        print(sprite.id .. "collided with" .. otherSprite.id)
+                        break
+                    end
+                end
+            end
         end,
         update = function() end
     }
 end
 
+-- function AABB(t1, t2)
+--     l1, t1, r1, b1 = unpack(t1)
+--     l2, t2, r2, b2 = unpack(t2)
+--     return (l1<r2 and r1>l2) and (t1<b2 and b1>t2)
+-- end
 
 --[[
 Buttons
