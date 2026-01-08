@@ -10,7 +10,15 @@ __lua__
 -- p
 
 function _init()
-    CURR_SCENE = startMenu()
+    --CURR_SCENE = startMenu()
+    p = newPlayer(50, 50)
+
+        -- example of a full texture
+    mega_tx = {
+        t(s("x", 7, "head"), {0, 0}),
+        t(s("x", 7, "body"), {0, 1})
+    }
+    thingy = co(0, 0, 0, 0, mega_tx, "thingy")
 end
 
 function _update60()
@@ -19,7 +27,10 @@ end
 
 function _draw()
     cls()
-    CURR_SCENE.draw()
+    --CURR_SCENE.draw()
+    --print(p .. " " .. weed_tree)
+    p.draw()
+    thingy.draw()
 end
 
 ----- PLAYER
@@ -79,6 +90,40 @@ function levelOne()
 end
 -----
 
+function s(str, colour, id)
+    return {
+        str, colour,
+        width = 8, hieght = 8,
+        globalX, globalY,
+        id
+    }
+
+-- texture
+function t(sprite, pos)
+    return {
+        sprite, pos
+    }
+
+-- collisionObject
+function co(x, y, w, h, texture, id) 
+    return {
+        x, y, w, h,
+        texture,
+        id,
+        draw = function()
+            for tx in all(mega_tx) do
+                sprite = tx.sprite
+                sprite_str = sprite.str
+                sprites_col = sprite.col
+                sprite_w = sprite.width
+                sprite_h = sprite.height
+                pos = tx.pos
+                print(sprite_str, x + sprite_w * pos[0], y + sprite_h * pos[1], sprite.colour)
+            end
+
+        end,
+        update = function() end
+    }
 
 
 --[[
