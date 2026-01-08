@@ -22,12 +22,11 @@ function _init()
 
     weed_tree = co(0, 0, 0, 0,
         {
-            s("x", 7, 1, 0, 3, 2, "weed"),
-            s("x", 7, 0, 1, 3, 2, "weed"),
-            s("x", 7, 1, 1, 3, 2, "weed"),
-            s("x", 7, 2, 1, 3, 2, "weed"),
-            s("x", 7, 1, 2, 3, 2, "weed"),
-            s("x", 7, 1, 3, 3, 2, "weed"),
+            s("★", 11, 1, 1, 1, -2, "weed"),
+            s("★", 11, 0, 1, 3, 3, "weed"),
+            s("★", 11, 1, 1, 1, 3, "weed"),
+            s("★", 11, 2, 1, -1, 3, "weed"),
+            s("★", 11, 1, 2, 1, 2, "weed"),
         },
         "weed_tree"
     )
@@ -166,6 +165,7 @@ function co(x, y, w, h, texture, id)
                 if debugCollisions then
                     rect(sprite_x, sprite_y, sprite_x + sprite.w, sprite_y + sprite.h, 8)
                 end
+                -- +2 is just to center sprite texture with collision box
                 print(sprite.str, sprite_x + sprite.offX, sprite_y + sprite.offY, sprite.colour)
             end
 
@@ -252,7 +252,7 @@ Emojis
 \138 - ⌂ - House
 \140 - 😐 - Face
 \141 - ♪ - Musical note
-\146 -  - Star
+\146 - ★ - Star
 \147 - ⧗ - Hourglass
 \149 - ˇˇ - Birds
 \150 - ∧∧ - Sawtooth
