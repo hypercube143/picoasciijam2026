@@ -2,8 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 43
 __lua__
 --1337 420 8)
-
--- p = "🐱\n웃"
+-- vorp
+-- p = "🐱\n웃" 
 -- weed_tree = "★\n★\n★"
 
 -- CURR_SCENE
