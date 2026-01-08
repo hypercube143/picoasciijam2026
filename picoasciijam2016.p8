@@ -15,8 +15,9 @@ function _init()
 
         -- example of a full texture
     mega_tx = {
-        s("x", 7, 0, 0, "head"),
-        s("x", 7, 0, 1, "body"),
+        s("x", 7, 0, 0, 0, 0, "head"),
+        s("x", 7, 0, 1, 0, 0, "body"),
+        s("x", 7, 1, 1, 0, 0, "body"),
     }
     thingy = co(0, 0, 0, 0, mega_tx, "thingy")
 end
@@ -117,10 +118,9 @@ function co(x, y, w, h, texture, id)
         texture = texture,
         id = id,
         draw = function()
-            for sprite in all(mega_tx) do
+            for sprite in all(texture) do
                 print(sprite.str, x + sprite.w * sprite.x + sprite.offX, y + sprite.h * sprite.y + sprite.offY, sprite.colour)
             end
-
         end,
         update = function() end
     }
