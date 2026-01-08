@@ -19,6 +19,18 @@ function _init()
         s("x", 7, 0, 1, 3, 2, "part 2"),
     }
     thingy = co(0, 0, 0, 0, mega_tx, "thingy")
+
+    weed_tree = co(0, 0, 0, 0,
+        {
+            s("x", 7, 1, 0, 3, 2, "weed"),
+            s("x", 7, 0, 1, 3, 2, "weed"),
+            s("x", 7, 1, 1, 3, 2, "weed"),
+            s("x", 7, 2, 1, 3, 2, "weed"),
+            s("x", 7, 1, 2, 3, 2, "weed"),
+            s("x", 7, 1, 3, 3, 2, "weed"),
+        },
+        "weed_tree"
+    )
 end
 
 function _update60()
@@ -54,7 +66,7 @@ function newPlayer(x, y)
         update = function()
             movePlayer()
             -- check if player colliding - potentially make this a list and for loop later?
-            p.spr.collisionCheck(thingy)
+            p.spr.collisionCheck(weed_tree)
         end,
 
         
@@ -109,7 +121,7 @@ function levelOne()
         end,
         draw = function()
             p.draw( )
-            thingy.draw(90, 90)
+            weed_tree.draw(90, 90)
         end
     }
 end
