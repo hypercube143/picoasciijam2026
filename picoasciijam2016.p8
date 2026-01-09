@@ -266,7 +266,7 @@ function updateCorruption(level)
     totalGlyphs = corrWidth * corrHeight
     glyphCount = flr(((totalGlyphs) * level) + 0.5)
     chars = "▒░●◆▤▥🐱✽♥☉웃⌂😐♪★⧗"
-    chars = "😐🐱"
+    --chars = "😐🐱"
 
     corrGlyphArray = {}
 
