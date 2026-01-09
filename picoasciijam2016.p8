@@ -162,7 +162,7 @@ function newBar()
             pad = 10
             for i = 0, 9 do
                 -- should be grey as default
-                if 10-i > bar.level do
+                if 10-i > bar.level then
                     drawGlyphWithBorder("★", 6, "★", 5, bar.x, 2 + bar.y + i*pad)
                 else
                 -- and green up to bar level
