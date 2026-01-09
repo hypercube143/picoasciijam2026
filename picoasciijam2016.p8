@@ -20,7 +20,7 @@ debugCollisions = true
 
 -- GAME THINGS
 t = 0
-entities = {} -- eg collidable
+--entities = {} -- eg collidable
 map_tiles = {} -- eg collidable
 
 function _init()
@@ -40,6 +40,7 @@ function _draw()
     CURR_SCENE.draw()
 
     --- DEBUG PRINT
+    --debug = debug .. "aaa"
     print(debug, 2, 2, 7)
 
 end
@@ -102,23 +103,6 @@ function startMenu()
     }
 end
 
-function checkPlayerCollision(collidables)
--- check every collidable collisions against the player's from a list of collidables
-    for collidable in all(collidables) do
-        debug = tostr(p.spr.collisionCheck(collidable))
-        if p.spr.collisionCheck(collidable) then
-            -- if debug collisions, sprites turn yellow and pink when collision happens
-            if debugCollisions then
-                p.spr.colour = 10
-                collidable.colour = 14
-                sfx(0)
-            end
-            debug = debug .. "PLAYER COLLIDED WITH '" .. collidable.id .. "'!"
-        else
-            debug = "PLAYER NOT COLLIDED WITH ANYTHING"
-        end
-    end
-end
 
 platformNewlyCreated = false
 function attemptPlatformCreation(tick)
@@ -151,6 +135,7 @@ function levelOne()
     p = newPlayer(64, 100)
     bar = newBar()
     t = 0
+    entities = initEntities()
     return{
         update = function()
             p.update()
@@ -167,11 +152,11 @@ function levelOne()
             
 
             p.draw()
-            weed_tree.draw(90, 90)
+            --weed_tree.draw(90, 90)
             bar.draw()
             toCorrupt()
             ---
-            -- debug = debug .."tick: " .. t
+            --debug = debug .."tick: " .. t
 
             
             -- draw corruption every frame, update every 10th
@@ -187,9 +172,52 @@ function levelOne()
                 collidable.draw(collidable.x, worldY)
             end
 
-            
+            drawEntities()
+            debug = debug .. tostr(#entities)           
         end
     }
+end
+
+function initEntities()
+    return {weed(60, 60)}
+end
+
+function drawEntities()
+    for e in all(entities) do
+        e.draw(e.x, e.y)
+    end
+end
+
+function weed(x, y)
+    --str, colour, x, y, offX, offY, id
+    w = {s("★", 11, 0, 0, 0, 0, "weed")}
+    --x, y, w, h, texture, id
+    return co(x, y, -1, -1, w, "weed")
+end
+
+
+function checkPlayerCollision(collidables)
+-- check every collidable collisions against the player's from a list of collidables
+    for collidable in all(collidables) do
+        debug = tostr(p.spr.collisionCheck(collidable))
+        if p.spr.collisionCheck(collidable) then
+            -- if debug collisions, sprites turn yellow and pink when collision happens
+            if debugCollisions then
+                p.spr.colour = 10
+                collidable.colour = 14
+                sfx(0)
+                --
+                if collidable.id == "weed" then
+                    del(entities, collidable)
+                    bar.increaseHighness()
+                end
+                --
+            end
+            debug = debug .. "PLAYER COLLIDED WITH '" .. collidable.id .. "'!"
+        else
+            debug = "PLAYER NOT COLLIDED WITH ANYTHING"
+        end
+    end
 end
 
 
@@ -209,21 +237,29 @@ function newBar()
     return{
         x = 120,
         y = 0,
-        level = 7,
+        level = 2,
+        max_level = 10,
         update = function() end,
         draw = function() 
             -- grey background
             pad = 10
             for i = 0, 9 do
                 -- should be grey as default
-                if 10-i > bar.level then
+                if bar.max_level-i > bar.level then
                     drawGlyphWithBorder("★", 6, "★", 5, bar.x, 2 + bar.y + i*pad)
                 else
                 -- and green up to bar level
                     drawGlyphWithBorder("★", 3, "★", 11, bar.x, 2 + bar.y + i*pad)
                 end
             end
+        end,
+
+        increaseHighness = function()
+            if bar.level < bar.max_level then
+                bar.level += 1
+            end
         end
+
     }
 end
 
