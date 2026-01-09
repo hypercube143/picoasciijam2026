@@ -6,8 +6,8 @@ __lua__
 
 -- notes
 --[[
-screen is 128 px hence 16 by 16
-
+screen is 128 px hence 16 by 16 no, 5,6, 20 25
+glyph is 6x5
 --]]
 
 
@@ -118,6 +118,7 @@ end
 function levelOne()
     -- init occurs once level is loaded, hence no funciton:
     p = newPlayer(50, 50)
+    bar = newBar()
     t = 0
     return{
         update = function()
@@ -128,18 +129,73 @@ function levelOne()
             drawGrid("❎", "♥")
             p.draw()
             weed_tree.draw(90, 90)
-
+            bar.draw()
+            toCorrupt()
             ---
             debug = debug .."tick: " .. t
 
-            -- draw corruption every frame, update every 10th
-            if t % 10 == 0 then
-                updateCorruption(t * 0.0025)
-            end
-            drawCorruption()
         end
     }
 end
+
+
+-- draw corruption every frame, update every 10th
+-- should only happen on threshold reached
+function toCorrupt()
+    -- 5 weeds to bar and flash
+    if bar.level <= 2 then 
+        if t % 10 == 0 then
+            updateCorruption(t * 0.0025)
+         end
+        drawCorruption()
+    end
+end
+
+function newBar()
+    return{
+        x = 120,
+        y = 0,
+        level = 7,
+        update = function() end,
+        draw = function() 
+            -- grey background
+            pad = 10
+            for i = 0, 9 do
+                -- should be grey as default
+                if 10-i > bar.level do
+                    drawGlyphWithBorder("★", 6, "★", 5, bar.x, 2 + bar.y + i*pad)
+                else
+                -- and green up to bar level
+                    drawGlyphWithBorder("★", 3, "★", 11, bar.x, 2 + bar.y + i*pad)
+                end
+            end
+        end
+    }
+end
+
+-- FOR STRINGS
+function drawGlyphWithBorder(border, col1, inner, col2, x, y)
+    for xOff = -1, 1 do
+        for yOff = -1, 1 do
+            print(border, x + xOff, y + yOff, col1)
+        end
+    end
+    print(inner, x, y, col2)
+end
+
+-- FOR COs
+function drawBorder(borderShape, innerShape)
+    local b = borderShape
+    local i = innerShape
+    for xOff = -1, 1 do
+        for yOff = -1, 1 do
+            b.draw(b.x + xOff, b.y + yOff)
+        end
+    end
+    i.draw(i.x, i.y)
+end
+
+
 
 function drawGrid(border, fill)
     -- this for loop makes the game super laggy!???
@@ -167,8 +223,15 @@ function drawGrid(border, fill)
     inner_row .. 
     inner_row ..
     inner_row ..    
+    --
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row ..
+    inner_row ..
+    --
     outer_row
-    , 0, 0, 6)
+    , 0, 0, 5)
 
 end
 -----
