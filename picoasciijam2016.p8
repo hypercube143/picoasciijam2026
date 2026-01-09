@@ -16,6 +16,7 @@ screen is 128 px hence 16 by 16
 
 -- DEBUG THINGS
 debug = "debug: "
+debugCollisions = false
 
 -- GAME THINGS
 t = 0
@@ -130,6 +131,12 @@ function levelOne()
 
             ---
             debug = debug .."tick: " .. t
+
+            -- draw corruption every frame, update every 10th
+            if t % 10 == 0 then
+                updateCorruption(t * 0.0025)
+            end
+            drawCorruption()
         end
     }
 end
@@ -185,7 +192,7 @@ end
 --     }
 -- end
 
-debugCollisions = true
+
 -- collisionObject
 function co(x, y, w, h, texture, id) 
     return {
@@ -217,13 +224,13 @@ function co(x, y, w, h, texture, id)
                 for otherSprite in all(other.texture) do
 
                     l1 = sprite.globalX
-                    r1 = sprite.globalX + sprite.w
                     t1 = sprite.globalY
+                    r1 = sprite.globalX + sprite.w
                     b1 = sprite.globalY + sprite.h
 
                     l2 = otherSprite.globalX
-                    r2 = otherSprite.globalX + otherSprite.w
                     t2 = otherSprite.globalY
+                    r2 = otherSprite.globalX + otherSprite.w
                     b2 = otherSprite.globalY + otherSprite.h
 
                     collides = (l1<r2 and r1>l2) and (t1<b2 and b1>t2)
@@ -242,6 +249,64 @@ function co(x, y, w, h, texture, id)
         end,
         update = function() end
     }
+end
+
+corrWidth = 21
+corrHeight = 26
+corrGlyphArray = {}
+-- overlay that obscures player's vision
+-- level from 0-1
+function updateCorruption(level)
+
+    if level > 1.0 then
+        level = 1.0
+    end
+    
+    corrGlyphArray = {}
+    totalGlyphs = corrWidth * corrHeight
+    glyphCount = flr(((totalGlyphs) * level) + 0.5)
+    chars = "▒░●◆▤▥🐱✽♥☉웃⌂😐♪★⧗"
+    chars = "😐🐱"
+
+    corrGlyphArray = {}
+
+    -- add glyphs
+    for i = 1, glyphCount do
+        corrGlyphArray[#corrGlyphArray + 1] = chars[flr(rnd(#chars)) + 1]
+    end
+
+    -- add empty
+    for i = 1, totalGlyphs - glyphCount do
+        corrGlyphArray[#corrGlyphArray + 1] = ""
+    end
+
+    -- shuffle
+    for i = #corrGlyphArray, 2, -1 do
+        j = flr(rnd(i)) + 1
+        corrGlyphArray[i], corrGlyphArray[j] = corrGlyphArray[j], corrGlyphArray[i]
+    end
+end
+
+function drawCorruption()
+    xMod = 0
+    yMod = 0
+    spacer = 6
+    spacerY = 5
+    n = 1
+    -- draw grid of glyphs
+    for i = 1, corrHeight, 1 do
+        for j = 1, corrWidth, 1 do
+            char = corrGlyphArray[n]
+            -- print only if non empty glyph
+            if char != "" then
+                print(char, xMod, yMod, 7)
+            end
+            n += 1
+            xMod += spacer
+        end
+        xMod = 0
+        yMod += spacerY
+    end
 end
 
 -- function AABB(t1, t2)
