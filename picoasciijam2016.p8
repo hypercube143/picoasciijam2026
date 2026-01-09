@@ -117,6 +117,15 @@ function checkPlayerCollision(collidables)
     end
 end
 
+function attemptPlatformCreation(tick)
+    -- generate platform every 100 ticks
+        if (tick + 99) % 100 == 0 then
+            x = flr(rnd(16)) * 8
+            newPlatform = platformCo(x, 20, flr(3) + 2, 11)
+            map_tiles[#map_tiles + 1] = newPlatform 
+        end
+    end
+
 function levelOne()
     -- init occurs once level is loaded, hence no funciton:
     p = newPlayer(50, 50)
@@ -126,13 +135,8 @@ function levelOne()
         update = function()
             p.update()
             t += 1
-            -- generate platform every 100 ticks
-            if (t + 99) % 100 == 0 then
-                x = flr(rnd(16)) * 8
-                newPlatform = platformCo(x, 20, 3, 11)
-                map_tiles[#map_tiles + 1] = newPlatform 
-            end
-
+            
+            attemptPlatformCreation(t)
             checkPlayerCollision(map_tiles)
             checkPlayerCollision(entities)
 
@@ -190,7 +194,7 @@ function newBar()
             pad = 10
             for i = 0, 9 do
                 -- should be grey as default
-                if 10-i > bar.level do
+                if 10-i > bar.level then
                     drawGlyphWithBorder("★", 6, "★", 5, bar.x, 2 + bar.y + i*pad)
                 else
                 -- and green up to bar level
