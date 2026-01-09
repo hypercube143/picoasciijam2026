@@ -16,7 +16,7 @@ screen is 128 px hence 16 by 16
 
 -- DEBUG THINGS
 debug = "debug: "
-debugCollisions = false
+debugCollisions = true
 
 -- GAME THINGS
 t = 0
@@ -26,38 +26,22 @@ map_tiles = {} -- eg collidable
 function _init()
     t = 0
     CURR_SCENE = startMenu()
-
-    -- example of a full texture
-    mega_tx = {
-        s("x", 7, 0, 0, 3, 2, "part 1"),
-        s("x", 7, 0, 1, 3, 2, "part 2"),
-    }
-    thingy = co(0, 0, 0, 0, mega_tx, "thingy")
-
-    weed_tree = co(0, 0, 0, 0,
-        {
-            s("★", 11, 1, 1, 1, -2, "weed"),
-            s("★", 11, 0, 1, 3, 3, "weed"),
-            s("★", 11, 1, 1, 1, 3, "weed"),
-            s("★", 11, 2, 1, -1, 3, "weed"),
-            s("★", 11, 1, 2, 1, 2, "weed"),
-        },
-        "weed_tree"
-    )
 end
 
 function _update60()
    CURR_SCENE.update()
+   print(debug, 2, 2, 7)
 end
 
 function _draw()
     cls()
     debug = "debug: "
-
+    
     CURR_SCENE.draw()
 
     --- DEBUG PRINT
     print(debug, 2, 2, 7)
+
 end
 
 ----- PLAYER
@@ -79,7 +63,7 @@ function newPlayer(x, y)
         end,
         update = function()
             movePlayer()
-            -- check if player colliding - potentially make this a list and for loop later?
+            -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
             p.spr.collisionCheck(weed_tree)
         end,
 
@@ -115,6 +99,24 @@ function startMenu()
     }
 end
 
+function checkPlayerCollision(collidables)
+-- check every collidable collisions against the player's from a list of collidables
+    for collidable in all(collidables) do
+        debug = tostr(p.spr.collisionCheck(collidable))
+        if p.spr.collisionCheck(collidable) then
+            -- if debug collisions, sprites turn yellow and pink when collision happens
+            if debugCollisions then
+                p.spr.colour = 10
+                collidable.colour = 14
+                sfx(0)
+            end
+            debug = debug .. "PLAYER COLLIDED WITH '" .. collidable.id .. "'!"
+        else
+            debug = "PLAYER NOT COLLIDED WITH ANYTHING"
+        end
+    end
+end
+
 function levelOne()
     -- init occurs once level is loaded, hence no funciton:
     p = newPlayer(50, 50)
@@ -123,20 +125,41 @@ function levelOne()
         update = function()
             p.update()
             t += 1
+            -- generate platform every 100 ticks
+            if (t + 99) % 100 == 0 then
+                x = flr(rnd(16)) * 8
+                newPlatform = platformCo(x, 20, 3, 11)
+                map_tiles[#map_tiles + 1] = newPlatform 
+            end
+
+            checkPlayerCollision(map_tiles)
+            checkPlayerCollision(entities)
+
         end,
         draw = function()
             drawGrid("❎", "♥")
+            
+            
+
             p.draw()
             weed_tree.draw(90, 90)
 
             ---
-            debug = debug .."tick: " .. t
+            -- debug = debug .."tick: " .. t
 
+            
             -- draw corruption every frame, update every 10th
-            if t % 10 == 0 then
-                updateCorruption(t * 0.0025)
+            -- if t % 10 == 0 then
+            --     updateCorruption(t * 0.0025)
+            -- end
+            -- drawCorruption()
+
+            -- draw all map tile collidables
+            for collidable in all(map_tiles) do
+                collidable.draw(collidable.x, collidable.y)
             end
-            drawCorruption()
+
+            
         end
     }
 end
@@ -236,20 +259,54 @@ function co(x, y, w, h, texture, id)
                     collides = (l1<r2 and r1>l2) and (t1<b2 and b1>t2)
                     
                     if collides then
-                        -- if debug collisions, sprites turn yellow and pink when collision happens
-                        if debugCollisions then
-                            sprite.colour = 10
-                            otherSprite.colour = 14
-                        end
-                        -- print(sprite.id .. "collided with" .. otherSprite.id)
-                        -- break
+                        -- if debugCollisions then
+                        --     sprite.colour = 10
+                        --     otherSprite.colour = 14
+                        -- end
+                        return true
                     end
                 end
             end
+            return false
         end,
         update = function() end
     }
 end
+
+
+
+-- COLLISION OBJECTS
+weed_tree = co(0, 0, 0, 0,
+    {
+        s("★", 11, 1, 1, 1, -2, "weed"),
+        s("★", 11, 0, 1, 3, 3, "weed"),
+        s("★", 11, 1, 1, 1, 3, "weed"),
+        s("★", 11, 2, 1, -1, 3, "weed"),
+        s("★", 11, 1, 2, 1, 2, "weed"),
+    },
+    "weed_tree"
+)
+
+function platformCo(x, y, length, colour)
+    -- add left platform edge
+    texture = {s("▒", colour, 0, 0, 1, 2, "platform_edge_left")}
+    -- length of a platform must be at least 1
+    if length == 1 then
+        return co(x, y, 0, 0, texture, "platform")
+    end
+    -- add middle section
+    i = 1
+    for i = 1, length - 2, 1 do
+        texture[#texture + 1] = s("▤", colour, i, 0, 1, 2, "platform_middle")
+    end
+    -- add right platform edge
+    texture[#texture + 1] = s("▒", colour, i + 1, 0, 1, 2, "platform_edge_right")
+    return co(x, y, 0, 0, texture, "platform")
+end
+
+
+
+
 
 corrWidth = 21
 corrHeight = 26
@@ -329,14 +386,14 @@ Symbols
 \code - symbol - name
 
 \16 - ▮ - Vertical rectangle
-\17 - ▬ - Horizontal rectangle
+\17 - ヌ∧て - Horizontal rectangle
 \18 - Horizontal half filled rectangle?
 \22 - ◀ - Back
 \23 - ▶ - Forward
 \24 -「 - Japanese starting quote
 \25 - 」- Japanese ending quote
 \28 - 、- Japanese comma
-\29 - ▪ - Small square (bigger than a pixel)
+\29 - ヌ∧ち - Small square (bigger than a pixel)
 \31 - ⁘ - Four dots
 \128 - ■ - Square
 \129 - ▒ - Checkerboard
@@ -370,3 +427,5 @@ __gfx__
 00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__sfx__
+000100000d0500f05010050120501405017050190501d0501f050210503405024050250502705028050290502a0502b0502d0502d0502e0502e0502e050070500605005050050500605009050150500000000000
