@@ -57,6 +57,7 @@ function newPlayer(x, y)
         spr = co(x, y, 8, 8, texture, "player"),
         x = x,
         y = y,
+        worldY = 0, -- in pixels
         speed = 1,
         draw = function() 
             p.spr.draw(p.x, p.y)
@@ -80,7 +81,9 @@ function movePlayer()
         p.x += p.speed 
     end
     if btn(⬆️) then 
-        p.y -= p.speed 
+        -- p.y -= p.speed
+        -- DEBUGGING REMOVE LATER
+        p.worldY += p.speed
     end
     if btn(⬇️) then 
         p.y += p.speed 
@@ -117,18 +120,35 @@ function checkPlayerCollision(collidables)
     end
 end
 
+platformNewlyCreated = false
 function attemptPlatformCreation(tick)
-    -- generate platform every 100 ticks
-        if (tick + 99) % 100 == 0 then
-            x = flr(rnd(16)) * 8
-            newPlatform = platformCo(x, 20, flr(3) + 2, 11)
-            map_tiles[#map_tiles + 1] = newPlatform 
-        end
+    -- -- generate platform every 100 ticks
+    -- if (tick + 99) % 100 == 0 then
+    
+    -- generate two blocks apart based on height
+    if p.worldY % (8 * 2) == 0 and (not platformNewlyCreated) then
+        -- generate width between 2 - 5,
+        -- position so there's at least 1 block padding to the left or right
+        w = flr(rnd(3)) + 2
+        x = flr(rnd(16 - w) + 1) * 8 
+        -- set world y to be above the player's, just out of screen
+        worldY = p.worldY + 8 -- px above
+        -- maybe later include the chance for a weed object to spawn just above the platform based on worldY HERE
+        newPlatform = platformCo(x, worldY, w, 12)
+        map_tiles[#map_tiles + 1] = newPlatform
+        platformNewlyCreated = true
+    else
+        platformNewlyCreated = false
     end
+end
+
+function getCoYFromPlayerWorldY(collidable)
+    return p.worldY - collidable.y
+end
 
 function levelOne()
     -- init occurs once level is loaded, hence no funciton:
-    p = newPlayer(50, 50)
+    p = newPlayer(64, 100)
     bar = newBar()
     t = 0
     return{
@@ -162,7 +182,9 @@ function levelOne()
 
             -- draw all map tile collidables
             for collidable in all(map_tiles) do
-                collidable.draw(collidable.x, collidable.y)
+                worldY = getCoYFromPlayerWorldY(collidable)
+                debug = debug .. worldY
+                collidable.draw(collidable.x, worldY)
             end
 
             
@@ -292,6 +314,7 @@ end
 function co(x, y, w, h, texture, id) 
     return {
         x = x, y = y, w = w, h = h,
+        worldY = -1,
         texture = texture,
         id = id,
         -- draw texture to screen based on x, y pos
@@ -359,20 +382,19 @@ weed_tree = co(0, 0, 0, 0,
     "weed_tree"
 )
 
-function platformCo(x, y, length, colour)
+function platformCo(x, y, w, colour)
     -- add left platform edge
     texture = {s("▒", colour, 0, 0, 1, 2, "platform_edge_left")}
     -- length of a platform must be at least 1
-    if length == 1 then
+    if w == 1 then
         return co(x, y, 0, 0, texture, "platform")
     end
     -- add middle section
-    i = 1
-    for i = 1, length - 2, 1 do
+    for i = 1, w - 2, 1 do
         texture[#texture + 1] = s("▤", colour, i, 0, 1, 2, "platform_middle")
     end
     -- add right platform edge
-    texture[#texture + 1] = s("▒", colour, i + 1, 0, 1, 2, "platform_edge_right")
+    texture[#texture + 1] = s("▒", colour, w - 1, 0, 1, 2, "platform_edge_right")
     return co(x, y, 0, 0, texture, "platform")
 end
 
