@@ -4,16 +4,21 @@ __lua__
 --1337 420 8)
 -- vorp
 
--- notes
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- NOTES
+------------------------------------------------------------------------------------------------------------------------------------------------------
 --[[
 screen is 128 px hence 16 by 16 no, 5,6, 20 25
 glyph is 6x5
+
+
+
+
+
 --]]
-
-
--- TEMP THINGS
-
-
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- GLOBALS
+------------------------------------------------------------------------------------------------------------------------------------------------------
 -- DEBUG THINGS
 debug = "debug: "
 debugCollisions = false
@@ -24,6 +29,9 @@ t = 0
 --entities = {} -- eg collidable
 map_tiles = {} -- eg collidable
 
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MAIN GAME FUNCTIONS
+------------------------------------------------------------------------------------------------------------------------------------------------------
 function _init()
     t = 0
     CURR_SCENE = startMenu()
@@ -37,116 +45,14 @@ end
 function _draw()
     cls()
     debug = "debug: "
-    
     CURR_SCENE.draw()
-
-    --- DEBUG PRINT
-    --debug = debug .. "aaa"
     print(debug, 2, 2, 7)
 
 end
 
------ PLAYER
-defaultPlayerGravity = 1.5
-function newPlayer(x, y)
-    local texture = {
-            s("🐱", 7, 0, 0, 0, 4, "head"),
-            s("웃", 7, 0, 1, 0, 0, "body"),
-            s("L", 6, 0, 1, -1, -1, "tail")
-        }
-    return{
-        -- str = " 🐱\n(웃",
-        -- col = 7,
-        spr = co(x, y, 8, 8, texture, "player"),
-        x = x,
-        y = y,
-        worldY = 0, -- in pixels
-        speed = 1,
-        gravity = defaultPlayerGravity,
-        yVel = 0,
-        decel = 0.1,
-        jumpStr = 4.20, -- B) smok weed every day
-        draw = function() 
-            p.spr.draw(p.x, p.y)
-        end,
-        update = function()
-            checkPlayerCollision(entities)
-            tileColliders = checkPlayerCollision(map_tiles) -- potentially have these return values to inform below gravity logic
-            movePlayer(tileColliders)
-            -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
-            -- p.spr.collisionCheck(weed_tree)
-        end
-    }
-end
-
-
-upBtnJustPressed = false
-function movePlayer(colliders)
-
-    -- check whether player touching platform
-    touchingPlatform = false
-    platform = nil 
-    for collider in all(colliders) do
-        if collider.id == "platform" then
-            touchingPlatform = true
-            platform = collider
-        end
-    end
-
-    -- if touchingPlatform then
-    --     p.gravity = 0
-    -- else
-    --     p.gravity = defaultPlayerGravity
-    -- end
-
-    if btn(⬅️) then 
-        p.x -= p.speed 
-    end
-    if btn(➡️) then 
-        p.x += p.speed
-        -- p.worldY += p.speed
-    end
-    if btn(⬆️) then
-        -- can only tap, not hold to jump
-        if not upBtnJustPressed and touchingPlatform then
-            upBtnJustPressed = true
-            -- p.y -= p.speed
-            -- DEBUGGING REMOVE LATER
-            -- p.worldY += p.speed
-            p.yVel = p.jumpStr
-            -- player gravity
-        end
-    else
-        -- upBtn released
-        upBtnJustPressed = false
-    end
-    if btn(⬇️) then 
-        -- p.y += p.speed 
-        p.worldY -= p.speed
-    end
-    -- apply gravity etc
-    
-    p.worldY += p.yVel
-    p.yVel -= p.decel
-    if p.yVel < 0 then p.yVel = 0 end
-    -- apply gravity if not touching platform
-    if not touchingPlatform then
-        p.worldY -= p.gravity
-    -- propel player upwards if they aren't quite on the top of platform
-    -- else
-    --     if (p.worldY - 16) < platform.worldY then
-    --         p.worldY += 0.1
-    --     end
-    else
-        -- player hits their head
-        if (p.worldY + 1) < platform.worldY then
-            p.yVel = 0
-            p.worldY -= p.gravity
-        end
-    end
-end
-
----- LEVELS
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- LEVELS
+------------------------------------------------------------------------------------------------------------------------------------------------------
 function startMenu()
     return{
         update = function()
@@ -156,54 +62,6 @@ function startMenu()
             print("press x")
         end
     }
-end
-
-platformSpawnHeight = (11 * 8)
-platformYSpacing = (4 * 8)
-function attemptPlatformCreation(tick)
-    -- -- generate platform every 100 ticks
-    -- if (tick + 99) % 100 == 0 then
-    -- generate two blocks apart based on height
-    -- if (ceil(p.worldY) % platformYSpacing == 0) then
-    if true then --(tick + 99) % 100 == 0 then
-
-        -- only generate platform if there are none on this world y level
-        n = 0
-        for plat in all(map_tiles) do
-            checkHeight = (p.worldY + platformSpawnHeight)
-            if plat.worldY > (checkHeight - platformYSpacing) and plat.worldY < (checkHeight + platformYSpacing) then
-                n = 1
-            end
-        end
-
-        if n == 0 then
-            -- generate width between 3 - 5,
-            -- position so there's at least 1 block padding to the left or right
-            w = flr(rnd(3)) + 3
-            x = flr(rnd(15 - w) + 1) * 8 
-            -- set world y to be above the player's, just out of screen
-            worldY = p.worldY + platformSpawnHeight -- px above
-            -- maybe later include the chance for a weed object to spawn just above the platform based on worldY HERE
-            newPlatform = platformCo(x, worldY, w, 12)
-            newPlatform.worldY = worldY -- you have to set world y after instantiating
-            map_tiles[#map_tiles + 1] = newPlatform
-        end
-    end
-end
-
-function getCoYFromPlayerWorldY(collidable)
-    return p.worldY - collidable.y + p.y --(p.worldY - collidable.worldY)
-end
-
--- despawn all collidables in collidable table if they're a certain number of pixels below player
-function despawnOutOfRangeCollidables(threshold)
-    n = 1
-    for plat in all(map_tiles) do
-        if (p.worldY - threshold) > plat.worldY then -- (plat.worldY - threshold) then
-            deli(map_tiles, n)
-        end
-        n += 1
-    end
 end
 
 function levelOne()
@@ -278,23 +136,105 @@ function levelOne()
     }
 end
 
-function initEntities()
-    return {weed(60, 60)}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- PLAYER FUNCTIONS
+------------------------------------------------------------------------------------------------------------------------------------------------------
+defaultPlayerGravity = 1.5
+function newPlayer(x, y)
+    local texture = {
+            s("🐱", 7, 0, 0, 0, 4, "head"),
+            s("웃", 7, 0, 1, 0, 0, "body"),
+            s("L", 6, 0, 1, -1, -1, "tail")
+        }
+    return{
+        spr = co(x, y, 8, 8, texture, "player"),
+        x = x,
+        y = y,
+        worldY = 0, -- in pixels
+        speed = 1,
+        gravity = defaultPlayerGravity,
+        yVel = 0,
+        decel = 0.1,
+        jumpStr = 4.20, -- B) smok weed every day
+        draw = function() 
+            p.spr.draw(p.x, p.y)
+        end,
+        update = function()
+            checkPlayerCollision(entities)
+            tileColliders = checkPlayerCollision(map_tiles) -- potentially have these return values to inform below gravity logic
+            movePlayer(tileColliders)
+            -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
+            -- p.spr.collisionCheck(weed_tree)
+        end
+    }
 end
 
-function drawEntities()
-    for e in all(entities) do
-        e.draw(e.x, e.y)
+upBtnJustPressed = false
+function movePlayer(colliders)
+
+    -- check whether player touching platform
+    touchingPlatform = false
+    platform = nil 
+    for collider in all(colliders) do
+        if collider.id == "platform" then
+            touchingPlatform = true
+            platform = collider
+        end
+    end
+
+    -- if touchingPlatform then
+    --     p.gravity = 0
+    -- else
+    --     p.gravity = defaultPlayerGravity
+    -- end
+
+    if btn(⬅️) then 
+        p.x -= p.speed 
+    end
+    if btn(➡️) then 
+        p.x += p.speed
+        -- p.worldY += p.speed
+    end
+    if btn(⬆️) then
+        -- can only tap, not hold to jump
+        if not upBtnJustPressed and touchingPlatform then
+            upBtnJustPressed = true
+            -- p.y -= p.speed
+            -- DEBUGGING REMOVE LATER
+            -- p.worldY += p.speed
+            p.yVel = p.jumpStr
+            -- player gravity
+        end
+    else
+        -- upBtn released
+        upBtnJustPressed = false
+    end
+    if btn(⬇️) then 
+        -- p.y += p.speed 
+        p.worldY -= p.speed
+    end
+    -- apply gravity etc
+    
+    p.worldY += p.yVel
+    p.yVel -= p.decel
+    if p.yVel < 0 then p.yVel = 0 end
+    -- apply gravity if not touching platform
+    if not touchingPlatform then
+        p.worldY -= p.gravity
+    -- propel player upwards if they aren't quite on the top of platform
+    -- else
+    --     if (p.worldY - 16) < platform.worldY then
+    --         p.worldY += 0.1
+    --     end
+    else
+        -- player hits their head
+        if (p.worldY + 1) < platform.worldY then
+            p.yVel = 0
+            p.worldY -= p.gravity
+        end
     end
 end
-
-function weed(x, y)
-    --str, colour, x, y, offX, offY, id
-    w = {s("★", 11, 0, 0, 0, 0, "weed")}
-    --x, y, w, h, texture, id
-    return co(x, y, -1, -1, w, "weed")
-end
-
 
 function checkPlayerCollision(collidables)
 -- check every collidable collisions against the player's from a list of collidables
@@ -326,18 +266,95 @@ function checkPlayerCollision(collidables)
 end
 
 
--- draw corruption every frame, update every 10th
--- should only happen on threshold reached
-function toCorrupt()
-    -- 5 weeds to bar and flash
-    if bar.level <= 2 then 
-        if t % 10 == 0 then
-            updateCorruption(t * 0.0025)
-         end
-        drawCorruption()
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MAP THINGS
+------------------------------------------------------------------------------------------------------------------------------------------------------
+platformSpawnHeight = (11 * 8)
+platformYSpacing = (4 * 8)
+function attemptPlatformCreation(tick)
+    -- -- generate platform every 100 ticks
+    -- if (tick + 99) % 100 == 0 then
+    -- generate two blocks apart based on height
+    -- if (ceil(p.worldY) % platformYSpacing == 0) then
+    if true then --(tick + 99) % 100 == 0 then
+
+        -- only generate platform if there are none on this world y level
+        n = 0
+        for plat in all(map_tiles) do
+            checkHeight = (p.worldY + platformSpawnHeight)
+            if plat.worldY > (checkHeight - platformYSpacing) and plat.worldY < (checkHeight + platformYSpacing) then
+                n = 1
+            end
+        end
+
+        if n == 0 then
+            -- generate width between 3 - 5,
+            -- position so there's at least 1 block padding to the left or right
+            w = flr(rnd(3)) + 3
+            x = flr(rnd(15 - w) + 1) * 8 
+            -- set world y to be above the player's, just out of screen
+            worldY = p.worldY + platformSpawnHeight -- px above
+            -- maybe later include the chance for a weed object to spawn just above the platform based on worldY HERE
+            newPlatform = platformCo(x, worldY, w, 12)
+            newPlatform.worldY = worldY -- you have to set world y after instantiating
+            map_tiles[#map_tiles + 1] = newPlatform
+        end
     end
 end
 
+function getCoYFromPlayerWorldY(collidable)
+    return p.worldY - collidable.y + p.y --(p.worldY - collidable.worldY)
+end
+
+-- despawn all collidables in collidable table if they're a certain number of pixels below player
+function despawnOutOfRangeCollidables(threshold)
+    n = 1
+    for plat in all(map_tiles) do
+        if (p.worldY - threshold) > plat.worldY then -- (plat.worldY - threshold) then
+            deli(map_tiles, n)
+        end
+        n += 1
+    end
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ENTITY THINGS
+------------------------------------------------------------------------------------------------------------------------------------------------------
+function initEntities()
+    return {weed(60, 60), weedTree(20, 80)}
+end
+
+function drawEntities()
+    for e in all(entities) do
+        e.draw(e.x, e.y)
+    end
+end
+
+-- COLLISION OBJECTS
+function weedTree(x, y)
+   return co(x, y, 0, 0,
+        {
+            s("★", 11, 1, 1, 1, -2, "weed"),
+            s("★", 11, 0, 1, 3, 3, "weed"),
+            s("★", 11, 1, 1, 1, 3, "weed"),
+            s("★", 11, 2, 1, -1, 3, "weed"),
+            s("★", 11, 1, 2, 1, 2, "weed"),
+        },
+    "weed_tree"
+    )
+end
+
+function weed(x, y)
+    --str, colour, x, y, offX, offY, id
+    w = {s("★", 11, 0, 0, 0, 0, "weed")}
+    --x, y, w, h, texture, id
+    return co(x, y, -1, -1, w, "weed")
+end
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- GAME THINGS
+------------------------------------------------------------------------------------------------------------------------------------------------------
 function newBar()
     return{
         x = 120,
@@ -368,69 +385,80 @@ function newBar()
     }
 end
 
--- FOR STRINGS
-function drawGlyphWithBorder(border, col1, inner, col2, x, y)
-    for xOff = -1, 1 do
-        for yOff = -1, 1 do
-            print(border, x + xOff, y + yOff, col1)
-        end
+-- draw corruption every frame, update every 10th
+-- should only happen on threshold reached
+function toCorrupt()
+    -- 5 weeds to bar and flash
+    if bar.level <= 2 then 
+        if t % 10 == 0 then
+            updateCorruption(t * 0.0025)
+         end
+        drawCorruption()
     end
-    print(inner, x, y, col2)
 end
 
--- FOR COs
-function drawBorder(borderShape, innerShape)
-    local b = borderShape
-    local i = innerShape
-    for xOff = -1, 1 do
-        for yOff = -1, 1 do
-            b.draw(b.x + xOff, b.y + yOff)
-        end
+corrWidth = 21
+corrHeight = 26
+corrGlyphArray = {}
+-- overlay that obscures player's vision
+-- level from 0-1
+function updateCorruption(level)
+
+    if level > 1.0 then
+        level = 1.0
     end
-    i.draw(i.x, i.y)
-end
-
-
-
-function drawGrid(border, fill)
-    -- this for loop makes the game super laggy!???
-    -- print(border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. "\n", 0, 0, 7)
-    -- for i = 0, 14 do
-    --     print(border .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. border .. "\n")
-    -- end
-    -- print(border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. "\n")
-
-    outer_row = border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. "\n"
-    inner_row = border .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. border .. "\n"
     
-    print(outer_row ..
-    inner_row ..
-    inner_row .. 
-    inner_row ..
-    inner_row .. 
-    inner_row ..
-    inner_row .. 
-    inner_row ..
-    inner_row .. 
-    inner_row ..
-    inner_row .. 
-    inner_row ..
-    inner_row .. 
-    inner_row ..
-    inner_row ..    
-    --
-    inner_row ..
-    inner_row .. 
-    inner_row ..
-    inner_row ..
-    inner_row ..
-    --
-    outer_row
-    , 0, 0, 5)
+    corrGlyphArray = {}
+    totalGlyphs = corrWidth * corrHeight
+    glyphCount = flr(((totalGlyphs) * level) + 0.5)
+    chars = "▒░●◆▤▥🐱✽♥☉웃⌂😐♪★⧗"
+    --chars = "😐🐱"
 
+    corrGlyphArray = {}
+
+    -- add glyphs
+    for i = 1, glyphCount do
+        corrGlyphArray[#corrGlyphArray + 1] = chars[flr(rnd(#chars)) + 1]
+    end
+
+    -- add empty
+    for i = 1, totalGlyphs - glyphCount do
+        corrGlyphArray[#corrGlyphArray + 1] = ""
+    end
+
+    -- shuffle
+    for i = #corrGlyphArray, 2, -1 do
+        j = flr(rnd(i)) + 1
+        corrGlyphArray[i], corrGlyphArray[j] = corrGlyphArray[j], corrGlyphArray[i]
+    end
 end
------
 
+function drawCorruption()
+    xMod = 0
+    yMod = 0
+    spacer = 6
+    spacerY = 5
+    n = 1
+    -- draw grid of glyphs
+    for i = 1, corrHeight, 1 do
+        for j = 1, corrWidth, 1 do
+            char = corrGlyphArray[n]
+            -- print only if non empty glyph
+            if char != "" then
+                print(char, xMod, yMod, 7)
+            end
+            n += 1
+            xMod += spacer
+        end
+        xMod = 0
+        yMod += spacerY
+    end
+end
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- COLLISION OBJECT THINGS
+------------------------------------------------------------------------------------------------------------------------------------------------------
 function s(str, colour, x, y, offX, offY, id)
     return {
         str = str, colour = colour,
@@ -442,15 +470,6 @@ function s(str, colour, x, y, offX, offY, id)
         id = id,
     }
 end
-
-
--- texture
--- function t(sprite, pos)
---     return {
---         sprite = sprite, pos = pos
---     }
--- end
-
 
 -- collisionObject
 function co(x, y, w, h, texture, id) 
@@ -513,20 +532,6 @@ function co(x, y, w, h, texture, id)
     }
 end
 
-
-
--- COLLISION OBJECTS
-weed_tree = co(0, 0, 0, 0,
-    {
-        s("★", 11, 1, 1, 1, -2, "weed"),
-        s("★", 11, 0, 1, 3, 3, "weed"),
-        s("★", 11, 1, 1, 1, 3, "weed"),
-        s("★", 11, 2, 1, -1, 3, "weed"),
-        s("★", 11, 1, 2, 1, 2, "weed"),
-    },
-    "weed_tree"
-)
-
 platformColourN = 0
 platformColours = {8, 9, 10, 11, 12, 13}
 platformRainbowMode = true
@@ -555,73 +560,65 @@ function platformCo(x, y, w, colour)
 end
 
 
-
-
-
-corrWidth = 21
-corrHeight = 26
-corrGlyphArray = {}
--- overlay that obscures player's vision
--- level from 0-1
-function updateCorruption(level)
-
-    if level > 1.0 then
-        level = 1.0
-    end
-    
-    corrGlyphArray = {}
-    totalGlyphs = corrWidth * corrHeight
-    glyphCount = flr(((totalGlyphs) * level) + 0.5)
-    chars = "▒░●◆▤▥🐱✽♥☉웃⌂😐♪★⧗"
-    --chars = "😐🐱"
-
-    corrGlyphArray = {}
-
-    -- add glyphs
-    for i = 1, glyphCount do
-        corrGlyphArray[#corrGlyphArray + 1] = chars[flr(rnd(#chars)) + 1]
-    end
-
-    -- add empty
-    for i = 1, totalGlyphs - glyphCount do
-        corrGlyphArray[#corrGlyphArray + 1] = ""
-    end
-
-    -- shuffle
-    for i = #corrGlyphArray, 2, -1 do
-        j = flr(rnd(i)) + 1
-        corrGlyphArray[i], corrGlyphArray[j] = corrGlyphArray[j], corrGlyphArray[i]
-    end
-end
-
-function drawCorruption()
-    xMod = 0
-    yMod = 0
-    spacer = 6
-    spacerY = 5
-    n = 1
-    -- draw grid of glyphs
-    for i = 1, corrHeight, 1 do
-        for j = 1, corrWidth, 1 do
-            char = corrGlyphArray[n]
-            -- print only if non empty glyph
-            if char != "" then
-                print(char, xMod, yMod, 7)
-            end
-            n += 1
-            xMod += spacer
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- UTIL
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FOR STRINGS
+function drawGlyphWithBorder(border, col1, inner, col2, x, y)
+    for xOff = -1, 1 do
+        for yOff = -1, 1 do
+            print(border, x + xOff, y + yOff, col1)
         end
-        xMod = 0
-        yMod += spacerY
     end
+    print(inner, x, y, col2)
 end
 
--- function AABB(t1, t2)
---     l1, t1, r1, b1 = unpack(t1)
---     l2, t2, r2, b2 = unpack(t2)
---     return (l1<r2 and r1>l2) and (t1<b2 and b1>t2)
--- end
+-- FOR COs
+function drawBorder(borderShape, innerShape)
+    local b = borderShape
+    local i = innerShape
+    for xOff = -1, 1 do
+        for yOff = -1, 1 do
+            b.draw(b.x + xOff, b.y + yOff)
+        end
+    end
+    i.draw(i.x, i.y)
+end
 
+function drawGrid(border, fill)
+    outer_row = border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. border .. "\n"
+    inner_row = border .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. fill .. border .. "\n"
+    
+    print(outer_row ..
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row ..    
+    --
+    inner_row ..
+    inner_row .. 
+    inner_row ..
+    inner_row ..
+    inner_row ..
+    --
+    outer_row
+    , 0, 0, 5)
+
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ASCII
+------------------------------------------------------------------------------------------------------------------------------------------------------
 --[[
 Buttons
 \code - symbol - name
