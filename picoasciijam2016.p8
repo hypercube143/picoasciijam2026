@@ -191,10 +191,14 @@ function movePlayer(colliders)
 
     if btn(⬅️) then 
         p.x -= p.speed 
+
+        if p.x < -2 then p.x = 125 end
     end
     if btn(➡️) then 
         p.x += p.speed
         -- p.worldY += p.speed
+
+        if p.x > 124 then p.x = -5 end
     end
     if btn(⬆️) then
         -- can only tap, not hold to jump
