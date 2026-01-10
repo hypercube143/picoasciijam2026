@@ -72,10 +72,9 @@ function levelOne()
     entities = initEntities()
     map_tiles[1] = platformCo(8, -16, 14, 12) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
     -- generate initial platforms
-    for i = 1, 4, 1 do
-        w = flr(rnd(3)) + 3
-        x = flr(rnd(15 - w) + 1) * 8 
-        worldY = i * 32
+    for i = 1, 5, 1 do
+        x, w = unpack(calcPlatformXPosAndWBasedOnLastPlatform())
+        worldY = i * platformYSpacing
         platform = platformCo(x, worldY, w, 12)
         platform.worldY = worldY
         map_tiles[#map_tiles + 1] = platform
@@ -287,15 +286,12 @@ function attemptPlatformCreation(tick)
         for plat in all(map_tiles) do
             checkHeight = (p.worldY + platformSpawnHeight)
             if plat.worldY > (checkHeight - platformYSpacing) and plat.worldY < (checkHeight + platformYSpacing) then
-                n = 1
+                n += 1
             end
         end
 
         if n == 0 then
-            -- generate width between 3 - 5,
-            -- position so there's at least 1 block padding to the left or right
-            w = flr(rnd(3)) + 3
-            x = flr(rnd(15 - w) + 1) * 8 
+            x, w = unpack(calcPlatformXPosAndWBasedOnLastPlatform())
             -- set world y to be above the player's, just out of screen
             worldY = p.worldY + platformSpawnHeight -- px above
             -- maybe later include the chance for a weed object to spawn just above the platform based on worldY HERE
@@ -304,6 +300,25 @@ function attemptPlatformCreation(tick)
             map_tiles[#map_tiles + 1] = newPlatform
         end
     end
+end
+
+function calcPlatformXPosAndWBasedOnLastPlatform()
+    -- A PLATFORM MUST FOLLOW THESE RULES:
+    -- generate width between 3 - 5,
+    -- position so there's at least 1 block padding to the left or right
+    -- must not be covering the previous platform; must be far enough to the left or right and be smaller if close
+    -- NO LONGER INCLUDED (player can wrap around screen, these jumps aren't impossible anymore): mustn't generate further than 6 blocks from the previous platform. above 6 blocks is too hard / impossible to jump between
+
+    prevPlatform = map_tiles[#map_tiles] 
+
+    -- two platforms on either layers can never spawn right next to each other
+    x = prevPlatform.x
+    while prevPlatform.x == x do -- and abs((prevPlatform.x - x)/8.0) < 6 do
+        -- always 3 long
+        w = 3 -- flr(rnd(3)) + 3 
+        x = flr(rnd(15 - w) + 1) * 8 
+    end
+    return {x, w}
 end
 
 function getCoYFromPlayerWorldY(collidable)
@@ -541,12 +556,17 @@ platformColours = {8, 9, 10, 11, 12, 13}
 platformRainbowMode = true
 function platformCo(x, y, w, colour)
     -- cycle thru rainbow colours bc why not :pp
-    if platformRainbowMode then
-        platformColourN += 1
-        if platformColourN > #platformColours then 
-            platformColourN = 1
+    -- if a platform has the colour '-420' bypass rainbow mode and choose the same colour as the prev platform (this is for platforms on the same level as each other being the same col)
+    if colour != -420 then
+        if platformRainbowMode then
+            platformColourN += 1
+            if platformColourN > #platformColours then 
+                platformColourN = 1
+            end
+            colour = platformColours[platformColourN]
         end
-        colour = platformColours[platformColourN]
+    else
+        colour = map_tiles[#map_tiles]
     end
     -- add left platform edge
     texture = {s("▒", colour, 0, 0, 1, 2, "platform_edge_left")}
