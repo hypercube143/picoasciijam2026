@@ -315,8 +315,10 @@ function checkPlayerCollision(collidables)
                 bar.increaseHighness()
             end
             --
-            if collidable.id == "platform" then
-                -- logic here for stopping the player from falling idrk where this should go hrm
+            if collidable.id == "platform" then -- platform should be turning white when player hits it but this not the case for some reason gahhh
+                for sprite in all(collidable) do
+                    sprite.colour = 7
+                end
             end
         end
     end
@@ -432,6 +434,7 @@ end
 function s(str, colour, x, y, offX, offY, id)
     return {
         str = str, colour = colour,
+        originalColour = colour, -- helpful for knowing which colour the platforms should go back to after flashing white when landed on
         w = 8, h = 8,
         x = x, y = y,
         offX = offX, offY = offY,
@@ -524,7 +527,18 @@ weed_tree = co(0, 0, 0, 0,
     "weed_tree"
 )
 
+platformColourN = 0
+platformColours = {8, 9, 10, 11, 12, 13}
+platformRainbowMode = true
 function platformCo(x, y, w, colour)
+    -- cycle thru rainbow colours bc why not :pp
+    if platformRainbowMode then
+        platformColourN += 1
+        if platformColourN > #platformColours then 
+            platformColourN = 1
+        end
+        colour = platformColours[platformColourN]
+    end
     -- add left platform edge
     texture = {s("▒", colour, 0, 0, 1, 2, "platform_edge_left")}
     -- length of a platform must be at least 1
