@@ -70,12 +70,14 @@ function levelOne()
     bar = newBar()
     t = 0
     entities = initEntities()
-    map_tiles[1] = platformCo(8, -16, 14, 12) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
-    -- generate initial platforms
+    for i = 1, 5, 1 do
+        map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
+    end
+        -- generate initial platforms
     for i = 1, 5, 1 do
         x, w = unpack(calcPlatformXPosAndWBasedOnLastPlatform())
-        worldY = i * platformYSpacing
-        platform = platformCo(x, worldY, w, 12)
+        worldY = (i * platformYSpacing) - (8 * 3) 
+        platform = platformCo(x, worldY, w, 420)
         platform.worldY = worldY
         map_tiles[#map_tiles + 1] = platform
     end
@@ -215,7 +217,7 @@ function movePlayer(colliders)
     end
     if btn(⬇️) then 
         -- p.y += p.speed 
-        p.worldY -= p.speed
+        -- p.worldY -= p.speed
     end
     -- apply gravity etc
     
@@ -295,7 +297,7 @@ function attemptPlatformCreation(tick)
             -- set world y to be above the player's, just out of screen
             worldY = p.worldY + platformSpawnHeight -- px above
             -- maybe later include the chance for a weed object to spawn just above the platform based on worldY HERE
-            newPlatform = platformCo(x, worldY, w, 12)
+            newPlatform = platformCo(x, worldY, w, 420)
             newPlatform.worldY = worldY -- you have to set world y after instantiating
             map_tiles[#map_tiles + 1] = newPlatform
         end
@@ -551,21 +553,19 @@ function co(x, y, w, h, texture, id)
     }
 end
 
-platformColourN = 0
+platformColourN = 4 -- start at blue
 platformColours = {8, 9, 10, 11, 12, 13}
-platformRainbowMode = true
 function platformCo(x, y, w, colour)
-    -- cycle thru rainbow colours bc why not :pp
-    -- if a platform has the colour '-420' bypass rainbow mode and choose the same colour as the prev platform (this is for platforms on the same level as each other being the same col)
-    if colour != -420 then
-        if platformRainbowMode then
-            platformColourN += 1
-            if platformColourN > #platformColours then 
-                platformColourN = 1
-            end
-            colour = platformColours[platformColourN]
+    if colour == 420 then
+        -- cycle thru rainbow colours bc why not :pp
+        platformColourN += 1
+        if platformColourN > #platformColours then 
+            platformColourN = 1
         end
-    else
+        colour = platformColours[platformColourN]
+    end
+    if colour == 421 then
+        -- copy prev tile colour
         colour = map_tiles[#map_tiles]
     end
     -- add left platform edge
