@@ -16,7 +16,8 @@ glyph is 6x5
 
 -- DEBUG THINGS
 debug = "debug: "
-debugCollisions = true
+debugCollisions = false
+debugWorldYLevels = false
 
 -- GAME THINGS
 t = 0
@@ -46,6 +47,7 @@ function _draw()
 end
 
 ----- PLAYER
+defaultPlayerGravity = 1.5
 function newPlayer(x, y)
     local texture = {
             s("🐱", 7, 0, 0, 0, 4, "head"),
@@ -60,34 +62,87 @@ function newPlayer(x, y)
         y = y,
         worldY = 0, -- in pixels
         speed = 1,
+        gravity = defaultPlayerGravity,
+        yVel = 0,
+        decel = 0.1,
+        jumpStr = 4.20, -- B) smok weed every day
         draw = function() 
             p.spr.draw(p.x, p.y)
         end,
         update = function()
-            movePlayer()
+            checkPlayerCollision(entities)
+            tileColliders = checkPlayerCollision(map_tiles) -- potentially have these return values to inform below gravity logic
+            movePlayer(tileColliders)
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
-            p.spr.collisionCheck(weed_tree)
-        end,
-
-        
+            -- p.spr.collisionCheck(weed_tree)
+        end
     }
 end
 
 
-function movePlayer()
+upBtnJustPressed = false
+function movePlayer(colliders)
+
+    -- check whether player touching platform
+    touchingPlatform = false
+    platform = nil 
+    for collider in all(colliders) do
+        if collider.id == "platform" then
+            touchingPlatform = true
+            platform = collider
+        end
+    end
+
+    -- if touchingPlatform then
+    --     p.gravity = 0
+    -- else
+    --     p.gravity = defaultPlayerGravity
+    -- end
+
     if btn(⬅️) then 
         p.x -= p.speed 
     end
     if btn(➡️) then 
-        p.x += p.speed 
+        p.x += p.speed
+        -- p.worldY += p.speed
     end
-    if btn(⬆️) then 
-        -- p.y -= p.speed
-        -- DEBUGGING REMOVE LATER
-        p.worldY += p.speed
+    if btn(⬆️) then
+        -- can only tap, not hold to jump
+        if not upBtnJustPressed and touchingPlatform then
+            upBtnJustPressed = true
+            -- p.y -= p.speed
+            -- DEBUGGING REMOVE LATER
+            -- p.worldY += p.speed
+            p.yVel = p.jumpStr
+            -- player gravity
+        end
+    else
+        -- upBtn released
+        upBtnJustPressed = false
     end
     if btn(⬇️) then 
-        p.y += p.speed 
+        -- p.y += p.speed 
+        p.worldY -= p.speed
+    end
+    -- apply gravity etc
+    
+    p.worldY += p.yVel
+    p.yVel -= p.decel
+    if p.yVel < 0 then p.yVel = 0 end
+    -- apply gravity if not touching platform
+    if not touchingPlatform then
+        p.worldY -= p.gravity
+    -- propel player upwards if they aren't quite on the top of platform
+    -- else
+    --     if (p.worldY - 16) < platform.worldY then
+    --         p.worldY += 0.1
+    --     end
+    else
+        -- player hits their head
+        if (p.worldY + 1) < platform.worldY then
+            p.yVel = 0
+            p.worldY -= p.gravity
+        end
     end
 end
 
@@ -103,47 +158,83 @@ function startMenu()
     }
 end
 
-
-platformNewlyCreated = false
+platformSpawnHeight = (11 * 8)
+platformYSpacing = (4 * 8)
 function attemptPlatformCreation(tick)
     -- -- generate platform every 100 ticks
     -- if (tick + 99) % 100 == 0 then
-    
     -- generate two blocks apart based on height
-    if p.worldY % (8 * 2) == 0 and (not platformNewlyCreated) then
-        -- generate width between 2 - 5,
-        -- position so there's at least 1 block padding to the left or right
-        w = flr(rnd(3)) + 2
-        x = flr(rnd(16 - w) + 1) * 8 
-        -- set world y to be above the player's, just out of screen
-        worldY = p.worldY + 8 -- px above
-        -- maybe later include the chance for a weed object to spawn just above the platform based on worldY HERE
-        newPlatform = platformCo(x, worldY, w, 12)
-        map_tiles[#map_tiles + 1] = newPlatform
-        platformNewlyCreated = true
-    else
-        platformNewlyCreated = false
+    -- if (ceil(p.worldY) % platformYSpacing == 0) then
+    if true then --(tick + 99) % 100 == 0 then
+
+        -- only generate platform if there are none on this world y level
+        n = 0
+        for plat in all(map_tiles) do
+            checkHeight = (p.worldY + platformSpawnHeight)
+            if plat.worldY > (checkHeight - platformYSpacing) and plat.worldY < (checkHeight + platformYSpacing) then
+                n = 1
+            end
+        end
+
+        if n == 0 then
+            -- generate width between 3 - 5,
+            -- position so there's at least 1 block padding to the left or right
+            w = flr(rnd(3)) + 3
+            x = flr(rnd(15 - w) + 1) * 8 
+            -- set world y to be above the player's, just out of screen
+            worldY = p.worldY + platformSpawnHeight -- px above
+            -- maybe later include the chance for a weed object to spawn just above the platform based on worldY HERE
+            newPlatform = platformCo(x, worldY, w, 12)
+            newPlatform.worldY = worldY -- you have to set world y after instantiating
+            map_tiles[#map_tiles + 1] = newPlatform
+        end
     end
 end
 
 function getCoYFromPlayerWorldY(collidable)
-    return p.worldY - collidable.y
+    return p.worldY - collidable.y + p.y --(p.worldY - collidable.worldY)
+end
+
+-- despawn all collidables in collidable table if they're a certain number of pixels below player
+function despawnOutOfRangeCollidables(threshold)
+    n = 1
+    for plat in all(map_tiles) do
+        if (p.worldY - threshold) > plat.worldY then -- (plat.worldY - threshold) then
+            deli(map_tiles, n)
+        end
+        n += 1
+    end
 end
 
 function levelOne()
     -- init occurs once level is loaded, hence no funciton:
-    p = newPlayer(64, 100)
+    p = newPlayer(64, 80)
     bar = newBar()
     t = 0
     entities = initEntities()
+    map_tiles[1] = platformCo(8, -16, 14, 12) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
+    -- generate initial platforms
+    for i = 1, 4, 1 do
+        w = flr(rnd(3)) + 3
+        x = flr(rnd(15 - w) + 1) * 8 
+        worldY = i * 32
+        platform = platformCo(x, worldY, w, 12)
+        platform.worldY = worldY
+        map_tiles[#map_tiles + 1] = platform
+    end
+    
     return{
         update = function()
             p.update()
             t += 1
             
+            
             attemptPlatformCreation(t)
-            checkPlayerCollision(map_tiles)
-            checkPlayerCollision(entities)
+            -- delete any platforms which move far below screen
+            despawnOutOfRangeCollidables(200)
+           
+            -- checkPlayerCollision(map_tiles)
+            -- checkPlayerCollision(entities)
 
         end,
         draw = function()
@@ -152,9 +243,14 @@ function levelOne()
             
 
             p.draw()
+            -- DEBUGGING REMOVE LATER
+            if debugWorldYLevels then
+               print(p.worldY, p.x, p.y, 11)
+            end
             --weed_tree.draw(90, 90)
             bar.draw()
-            toCorrupt()
+            -- DEBUGGING UNCOMMENT LATER
+            -- toCorrupt()
             ---
             --debug = debug .."tick: " .. t
 
@@ -168,8 +264,12 @@ function levelOne()
             -- draw all map tile collidables
             for collidable in all(map_tiles) do
                 worldY = getCoYFromPlayerWorldY(collidable)
-                debug = debug .. worldY
+                
                 collidable.draw(collidable.x, worldY)
+                if debugWorldYLevels then
+                    -- collidable.texture[#collidable.texture] = s(collidable.worldY, 11, 0, 0, 0, 0, "end") -- DEBUGGING REMOVE LATER
+                    print(collidable.worldY, collidable.x, worldY, 11)
+                end
             end
 
             drawEntities()
@@ -198,26 +298,29 @@ end
 
 function checkPlayerCollision(collidables)
 -- check every collidable collisions against the player's from a list of collidables
+    collidedWith = {}
     for collidable in all(collidables) do
         debug = tostr(p.spr.collisionCheck(collidable))
         if p.spr.collisionCheck(collidable) then
+            collidedWith[#collidedWith + 1] = collidable
             -- if debug collisions, sprites turn yellow and pink when collision happens
             if debugCollisions then
                 p.spr.colour = 10
                 collidable.colour = 14
                 sfx(0)
-                --
-                if collidable.id == "weed" then
-                    del(entities, collidable)
-                    bar.increaseHighness()
-                end
-                --
             end
-            debug = debug .. "PLAYER COLLIDED WITH '" .. collidable.id .. "'!"
-        else
-            debug = "PLAYER NOT COLLIDED WITH ANYTHING"
+            --
+            if collidable.id == "weed" then
+                del(entities, collidable)
+                bar.increaseHighness()
+            end
+            --
+            if collidable.id == "platform" then
+                -- logic here for stopping the player from falling idrk where this should go hrm
+            end
         end
     end
+    return collidedWith
 end
 
 
@@ -369,6 +472,9 @@ function co(x, y, w, h, texture, id)
                 -- +2 is just to center sprite texture with collision box
                 print(sprite.str, sprite_x + sprite.offX, sprite_y + sprite.offY, sprite.colour)
             end
+            -- if debugWorldYLevels then
+            --     print(worldY, x, y, 11)
+            -- end
 
         end,
         -- update collisions
