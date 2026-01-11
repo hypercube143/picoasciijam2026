@@ -21,14 +21,13 @@ glyph is 6x5
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- DEBUG THINGS
 debug = "debug: "
-debugCollisions = false
-debugWorldYLevels = false
+debugCollisions = true
+debugWorldYLevels = true
 
 -- GAME THINGS
 t = 0
 --entities = {} -- eg collidable
 map_tiles = {} -- eg collidable
-
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MAIN GAME FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -89,8 +88,10 @@ function levelOne()
             
             
             attemptPlatformCreation(t)
-            -- delete any platforms which move far below screen
-            despawnOutOfRangeCollidables(200)
+            attemptToSpawnWeed()
+            -- delete any platforms & entities (weed) which move far below screen
+            despawnOutOfRangeCollidables(map_tiles, 200)
+            despawnOutOfRangeCollidables(entities, 200)
            
             -- checkPlayerCollision(map_tiles)
             -- checkPlayerCollision(entities)
@@ -121,23 +122,29 @@ function levelOne()
             -- drawCorruption()
 
             -- draw all map tile collidables
-            for collidable in all(map_tiles) do
-                worldY = getCoYFromPlayerWorldY(collidable)
-                
-                collidable.draw(collidable.x, worldY)
-                if debugWorldYLevels then
-                    -- collidable.texture[#collidable.texture] = s(collidable.worldY, 11, 0, 0, 0, 0, "end") -- DEBUGGING REMOVE LATER
-                    print(collidable.worldY, collidable.x, worldY, 11)
-                end
-            end
-
+            drawPlatforms()
             drawEntities()
-            debug = debug .. tostr(#entities)           
+            
+            --lastWeed = entities[#entities]
+            if lastWeed then
+                --debug = debug .. tostr(lastWeed.worldY)
+                debug = debug .. tostr(#entities)
+            end           
         end
     }
 end
 
-
+function drawPlatforms()
+    for collidable in all(map_tiles) do
+        worldY = getCoYFromPlayerWorldY(collidable)
+        
+        collidable.draw(collidable.x, worldY)
+        if debugWorldYLevels then
+            -- collidable.texture[#collidable.texture] = s(collidable.worldY, 11, 0, 0, 0, 0, "end") -- DEBUGGING REMOVE LATER
+            print(collidable.worldY, collidable.x, worldY, 11)
+        end
+    end
+end
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- PLAYER FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -217,7 +224,7 @@ function movePlayer(colliders)
     end
     if btn(⬇️) then 
         -- p.y += p.speed 
-        -- p.worldY -= p.speed
+        --p.worldY -= p.speed
     end
     -- apply gravity etc
     
@@ -241,11 +248,12 @@ function movePlayer(colliders)
     end
 end
 
+lastWeedCollectedWorldY = -1
 function checkPlayerCollision(collidables)
 -- check every collidable collisions against the player's from a list of collidables
     collidedWith = {}
     for collidable in all(collidables) do
-        debug = tostr(p.spr.collisionCheck(collidable))
+        -- debug = entities[#entities] -- tostr(p.spr.collisionCheck(collidable))
         if p.spr.collisionCheck(collidable) then
             collidedWith[#collidedWith + 1] = collidable
             -- if debug collisions, sprites turn yellow and pink when collision happens
@@ -255,9 +263,19 @@ function checkPlayerCollision(collidables)
                 sfx(0)
             end
             --
-            if collidable.id == "weed" then
-                del(entities, collidable)
-                bar.increaseHighness()
+            if collidable.id == "weed" and lastWeedCollectedWorldY != collidable.worldY then
+                -- del(entities, collidable)
+                if btn(❎) then
+                    lastWeedCollectedWorldY = collidable.worldY
+                    -- collidable.colour = 0
+                    idx = 1
+                    for c in all(collidables) do
+                        if c == collidable then break end
+                        idx += 1
+                    end
+                    entities[idx].y = -420
+                    bar.increaseHighness()
+                end
             end
             --
             if collidable.id == "platform" then -- platform should be turning white when player hits it but this not the case for some reason gahhh
@@ -304,6 +322,46 @@ function attemptPlatformCreation(tick)
     end
 end
 
+function attemptToSpawnWeed()
+    lastPlatform = map_tiles[#map_tiles]
+
+    if platformTotalCount % 7 != 0 then return end -- place above every nth platform
+
+   --  nOfPlatformsSeperated = 5
+
+    if lastPlatform == nil then return end
+
+    weedMod = 8 * 2
+    weedHeight = lastPlatform.worldY + weedMod
+
+    -- can only place weed if there isn't weed already on the last placed platform
+    canPlaceWeed = true
+    for entity in all(entities) do
+        if entity.id == "weed" then
+            if entity.worldY == weedHeight then
+               canPlaceWeed = false 
+            end
+            -- topOfScreenWorldY = p.worldY + (10 * 3)
+            -- if entity.worldY > topOfScreenWorldY - ((nOfPlatformsSeperated + 2) * 8) then
+            --     canPlaceWeed = false
+            -- end
+        end
+    end
+
+    if canPlaceWeed then
+        -- -- stupid lil solution to have weed only spawn between every 7 platforms
+        -- if #map_tiles % 2 == 0 then -- ENTITES MUST ONLY CONTAIN WEEED FROM NOW ON, OTHERWISE THIS WILL BREAK
+        --     x = (flr(rnd(14)) + 1) * 8
+        -- else
+        --     x = -420
+        -- end
+        x = (flr(rnd(14)) + 1) * 8
+        wed = weed(x, weedHeight)
+        wed.worldY = weedHeight
+        entities[#entities + 1] = wed
+    end
+end
+
 function calcPlatformXPosAndWBasedOnLastPlatform()
     -- A PLATFORM MUST FOLLOW THESE RULES:
     -- generate width between 3 - 5,
@@ -328,11 +386,11 @@ function getCoYFromPlayerWorldY(collidable)
 end
 
 -- despawn all collidables in collidable table if they're a certain number of pixels below player
-function despawnOutOfRangeCollidables(threshold)
+function despawnOutOfRangeCollidables(tabl, threshold)
     n = 1
-    for plat in all(map_tiles) do
+    for plat in all(tabl) do
         if (p.worldY - threshold) > plat.worldY then -- (plat.worldY - threshold) then
-            deli(map_tiles, n)
+            deli(tabl, n)
         end
         n += 1
     end
@@ -342,12 +400,13 @@ end
 -- ENTITY THINGS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 function initEntities()
-    return {weed(60, 60), weedTree(20, 80)}
+    return {} -- {weed(60, 60), weedTree(20, 80)}
 end
 
 function drawEntities()
     for e in all(entities) do
-        e.draw(e.x, e.y)
+        worldY = getCoYFromPlayerWorldY(e)
+        e.draw(e.x, worldY)
     end
 end
 
@@ -553,9 +612,11 @@ function co(x, y, w, h, texture, id)
     }
 end
 
+platformTotalCount = 0
 platformColourN = 4 -- start at blue
 platformColours = {8, 9, 10, 11, 12, 13}
 function platformCo(x, y, w, colour)
+    platformTotalCount += 1
     if colour == 420 then
         -- cycle thru rainbow colours bc why not :pp
         platformColourN += 1
