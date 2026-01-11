@@ -69,6 +69,7 @@ function levelOne()
     bar = newBar()
     t = 0
     entities = initEntities()
+    thoughts = initThoughts()
     for i = 1, 5, 1 do
         map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
     end
@@ -86,7 +87,7 @@ function levelOne()
             p.update()
             t += 1
             
-            
+            updateThoughts()
             attemptPlatformCreation(t)
             attemptToSpawnWeed()
             -- delete any platforms & entities (weed) which move far below screen
@@ -124,6 +125,9 @@ function levelOne()
             -- draw all map tile collidables
             drawPlatforms()
             drawEntities()
+            drawThoughts()
+
+            debug = debug .. tostr(#entities)           
             
             --lastWeed = entities[#entities]
             if lastWeed then
@@ -497,6 +501,89 @@ function weed(x, y)
 end
 
 
+-- global thought cloud vars
+-- shiftX = 0
+-- shiftY = 0
+MIN_DIST_FROM_PLAYER = 20
+
+function initThoughts()
+    --p.y + MIN_DIST_FROM_PLAYER + 5
+    local y = MIN_DIST_FROM_PLAYER + 5 
+    return {
+        thought(30, y, "get a j*b"),
+        thought(30, y, "literal idiot >:("),
+        thought(30, y, "you were an accident"),
+        thought(30, y, "you've wasted your life"),
+        thought(30, y, "failure"),
+    }
+end
+
+-- function thought(x, y, text)
+    
+--     return co(
+--         x,
+--         p.y + y, -- y under and relative to player
+--         -1, -1,
+--         {s(text, 8, 0, 0, 0, 0, "thought")},
+--         "thought"
+--     )
+-- end
+function thought(x, y, text)
+    
+    return{
+    shiftX = 0,
+    shiftY = 0,
+    text = text,
+    co = co(
+        x,
+        p.y + y, -- y under and relative to player
+        -1, -1,
+        {s(text, 8, 0, 0, 0, 0, "thought")},
+        "thought"
+        )
+    }
+end
+
+function updateThoughts()
+    
+    for thot in all(thoughts) do
+        
+        if t%20 == 0 then
+            -- if not(thot.x -1  < -5 or thot.x + 1 > 125) then shiftX = (-1 + flr(rnd(2))) end -- from -1 to 1
+            -- if not(thot.y -1  < p.y + MIN_DIST_FROM_PLAYER or thot.y + 1 > 120) then shiftY = (-1 + flr(rnd(2))) end -- from -1 to 1
+
+            if thot.co.x -1 <= -5 then 
+                thot.shiftX = flr(rnd(2)) -- 0 to 1
+            elseif thot.co.x + 1 >= 128 - (#thot.text)*3 then
+                thot.shiftX = -1 + flr(rnd(2)) -- -1 to ()
+            else
+                thot.shiftX = -1 + flr(rnd(3))
+            end
+
+            if thot.co.y -1 <= (p.y + MIN_DIST_FROM_PLAYER) then 
+                thot.shiftY = flr(rnd(2))
+            elseif thot.co.y +1 >= 120 then
+                thot.shiftY = -1 + flr(rnd(2))
+            else
+                thot.shiftY = -1 + flr(rnd(3))
+            end
+        
+        end
+
+        thot.co.x = lerp(thot.co.x, thot.co.x + thot.shiftX, .2)
+        thot.co.y = lerp(thot.co.y, thot.co.y + thot.shiftY, .2)
+    end
+end
+
+function drawThoughts()
+    line(0, p.y + MIN_DIST_FROM_PLAYER, 128, p.y + MIN_DIST_FROM_PLAYER, 7)
+    for t in all(thoughts) do
+        --t.draw(t.x, calcPlatformXPosAndWBasedOnLastPlatform(t))
+        t.co.draw(t.co.x, t.co.y)
+    end
+end
+
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- GAME THINGS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -713,6 +800,10 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- UTIL
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+function lerp(p1, p2, amt)
+    return p1 + (p2-p1) * amt
+end
+
 -- FOR STRINGS
 function drawGlyphWithBorder(border, col1, inner, col2, x, y)
     for xOff = -1, 1 do
