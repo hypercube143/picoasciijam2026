@@ -55,7 +55,10 @@ end
 function startMenu()
     return{
         update = function()
-            if btn(❎) then CURR_SCENE = levelOne() end
+            if btn(❎) then 
+                initLevelOne()
+                CURR_SCENE = levelOne() 
+            end
         end,
         draw = function() 
             print("press x")
@@ -63,13 +66,17 @@ function startMenu()
     }
 end
 
-function levelOne()
-    -- init occurs once level is loaded, hence no funciton:
+function initLevelOne()
     p = newPlayer(64, 80)
     bar = newBar()
     t = 0
     entities = initEntities()
     thoughts = initThoughts()
+end
+
+function levelOne()
+    -- init occurs once level is loaded, hence no funciton:
+    
     for i = 1, 5, 1 do
         map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
     end
@@ -183,6 +190,17 @@ function animation(fps, layers)
     }
 end
 
+
+
+
+-- animation layer
+function al(str, col)
+    return {
+        str = str,
+        colour = col
+    }
+end
+
 anim = animation(
     12,
     {
@@ -195,13 +213,6 @@ anim = animation(
 )
 
 
--- animation layer
-function al(str, col)
-    return {
-        str = str,
-        colour = col
-    }
-end
 
 function drawPlatforms()
     for collidable in all(map_tiles) do
@@ -510,11 +521,11 @@ function initThoughts()
     --p.y + MIN_DIST_FROM_PLAYER + 5
     local y = MIN_DIST_FROM_PLAYER + 5 
     return {
-        thought(30, y, "get a j*b"),
-        thought(30, y, "literal idiot >:("),
-        thought(30, y, "you were an accident"),
-        thought(30, y, "you've wasted your life"),
-        thought(30, y, "failure"),
+        thought(30, y, 7, "get a j*b"),
+        thought(30, y, 7, "literal idiot >:("),
+        thought(30, y, 7, "you were an accident"),
+        thought(30, y, 7, "you've wasted your life"),
+        --thought(30, y, "failure"),
     }
 end
 
@@ -528,7 +539,7 @@ end
 --         "thought"
 --     )
 -- end
-function thought(x, y, text)
+function thought(x, y, col, text)
     
     return{
     shiftX = 0,
@@ -538,7 +549,7 @@ function thought(x, y, text)
         x,
         p.y + y, -- y under and relative to player
         -1, -1,
-        {s(text, 8, 0, 0, 0, 0, "thought")},
+        {s(text, col, 0, 0, 0, 0, "thought")},
         "thought"
         )
     }
@@ -692,10 +703,13 @@ end
 -- COLLISION OBJECT THINGS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 function s(str, colour, x, y, offX, offY, id)
+    local width = 8
+    if id == "thought" then width = 4*#str end
     return {
         str = str, colour = colour,
         originalColour = colour, -- helpful for knowing which colour the platforms should go back to after flashing white when landed on
-        w = 8, h = 8,
+        --w = 8, h = 8,
+        w = width, h = 8,
         x = x, y = y,
         offX = offX, offY = offY,
         globalX = x, globalY = y,
