@@ -431,7 +431,7 @@ function attemptToSpawnWeed()
 
     if canPlaceWeed then
         -- -- stupid lil solution to have weed only spawn between every 7 platforms
-        -- if #map_tiles % 2 == 0 then -- ENTITES MUST ONLY CONTAIN WEEED FROM NOW ON, OTHERWISE THIS WILL BREAK
+        -- if #map_tiles % 2 == 0 then -- ENTITES MUST ONLY CONTAIN WEEED FROM NOW ON, OTHERWISE THIS WILL BREAK -- OKE
         --     x = (flr(rnd(14)) + 1) * 8
         -- else
         --     x = -420
