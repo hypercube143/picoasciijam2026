@@ -21,8 +21,8 @@ glyph is 6x5
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- DEBUG THINGS
 debug = "debug: "
-debugCollisions = true
-debugWorldYLevels = true
+debugCollisions = false
+debugWorldYLevels = false
 
 -- GAME THINGS
 t = 0
@@ -72,6 +72,7 @@ function initLevelOne()
     t = 0
     entities = initEntities()
     thoughts = initThoughts()
+    lerpingWeeds = {}
 
     for i = 1, 5, 1 do
         map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
@@ -93,6 +94,7 @@ function levelOne()
             t += 1
             
             updateThoughts()
+            updateLerpingWeeds()
             attemptPlatformCreation(t)
             attemptToSpawnWeed()
             -- delete any platforms & entities (weed) which move far below screen
@@ -131,6 +133,8 @@ function levelOne()
             drawPlatforms()
             drawEntities()
             drawThoughts()
+
+            drawLerpingWeeds()
 
             debug = debug .. tostr(#entities)           
             
@@ -232,6 +236,42 @@ function drawPlatforms()
         end
     end
 end
+
+toDelete = {}
+function updateLerpingWeeds()
+
+    -- will be valu in bar:
+    tempWeed = weed(20, 20)
+    barWorldY = getCoYFromPlayerWorldY(tempWeed)
+    goalX = 20
+    goalY = barWorldY
+    
+    toDelete = {}
+    if #lerpingWeeds > 0 then
+        for w in all(lerpingWeeds) do
+             w.x = lerp(w.x, 20, 0.2)
+             w.y = lerp(w.y, barWorldY, 0.2)
+             if w.x == goalX and w.y == goalY then 
+                --add(toDelete, w)
+                w.y = -420
+                bar.increaseHighness()
+             end
+        end  
+   end
+   for d in all(toDelete) do del(lerpingWeeds, d) end
+   toDelete = {}
+end
+
+function drawLerpingWeeds()
+    if #lerpingWeeds > 0 then
+        for w in all(lerpingWeeds) do
+            worldY = getCoYFromPlayerWorldY(w)
+            w.draw(w.x, worldY)      
+        end  
+   end
+   debug = "num todel: " .. #toDelete .. " num lerp: " .. #lerpingWeeds
+end
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- PLAYER FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -354,7 +394,14 @@ function checkPlayerCollision(collidables)
                 -- del(entities, collidable)
                 if btn(❎) then
                     lastWeedCollectedWorldY = collidable.worldY
+
+                    
+                    --startLerpingWeed()
+                    if #lerpingWeeds <1 then add(lerpingWeeds, weed(collidable.x, collidable.y)) end -- why am i getting 10 ir 11 in this tbale uhhh
+                    --del(entities, collidable)
                     collidable.y = -420
+
+
                     -- collidable.colour = 0
                     -- idx = 1
                     -- for c in all(collidables) do
@@ -362,7 +409,11 @@ function checkPlayerCollision(collidables)
                     --     idx += 1
                     -- end
                     -- entities[idx].y = -420
-                    bar.increaseHighness()
+
+
+                    -- bar.increaseHighness()
+
+
                     -- lerping will go here, or at least a call to the lerp function, right sap?
                     -- after lerp, change to a random animation scene
                     frames = {
