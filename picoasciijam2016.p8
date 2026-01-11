@@ -262,23 +262,19 @@ end
 
 toDelete = {}
 function updateLerpingWeeds()
-
-    -- will be valu in bar:
-    tempWeed = weed(20, 20)
-    barWorldY = getCoYFromPlayerWorldY(tempWeed)
-    goalX = 20
-    goalY = barWorldY
-    
+    barWorldX, barWorldY = unpack(bar.getNextEmptySlotXY())
     toDelete = {}
     if #lerpingWeeds > 0 then
         for w in all(lerpingWeeds) do
-             w.x = lerp(w.x, 20, 0.2)
+             w.x = lerp(w.x, barWorldX, 0.2)
              w.y = lerp(w.y, barWorldY, 0.2)
-             if w.x == goalX and w.y == goalY then 
-                --add(toDelete, w)
-                w.y = -420
+            local dist = 0.5
+            if abs(w.x - barWorldX) < dist and abs(w.y - barWorldY) < dist then
+                w.x = barWorldX
+                w.y = barWorldY
+                add(toDelete, w)
                 bar.increaseHighness()
-             end
+            end
         end  
    end
    for d in all(toDelete) do del(lerpingWeeds, d) end
@@ -288,8 +284,9 @@ end
 function drawLerpingWeeds()
     if #lerpingWeeds > 0 then
         for w in all(lerpingWeeds) do
-            worldY = getCoYFromPlayerWorldY(w)
-            w.draw(w.x, worldY)      
+            -- worldY = getCoYFromPlayerWorldY(w)
+            -- w.draw(w.x, worldY)     
+            w.draw(w.x, w.y) 
         end  
    end
    debug = "num todel: " .. #toDelete .. " num lerp: " .. #lerpingWeeds
@@ -420,7 +417,9 @@ function checkPlayerCollision(collidables)
 
                     
                     --startLerpingWeed()
-                    if #lerpingWeeds <1 then add(lerpingWeeds, weed(collidable.x, collidable.y)) end -- why am i getting 10 ir 11 in this tbale uhhh
+                    local screenY = getCoYFromPlayerWorldY(collidable)
+                    local w = weed(collidable.x, screenY)
+                    if #lerpingWeeds <1 then add(lerpingWeeds, w) end -- why am i getting 10 ir 11 in this tbale uhhh
                     --del(entities, collidable)
                     collidable.y = -420
 
@@ -639,7 +638,7 @@ end
 
 -- global thought cloud vars
 MIN_DIST_FROM_PLAYER = 20
-
+MAX_DIST_FROM_PLAYER = MIN_DIST_FROM_PLAYER + 25
 function initThoughts()
     local y = MIN_DIST_FROM_PLAYER + 5 
     return {
@@ -679,7 +678,7 @@ function updateThoughts()
 
             if thot.co.y -1 <= (p.y + MIN_DIST_FROM_PLAYER) then 
                 thot.shiftY = flr(rnd(2))
-            elseif thot.co.y +1 >= 120 then
+            elseif thot.co.y +1 >= (p.y + MAX_DIST_FROM_PLAYER) then
                 thot.shiftY = -1 + flr(rnd(2))
             else
                 thot.shiftY = -1 + flr(rnd(3))
@@ -693,7 +692,10 @@ function updateThoughts()
 end
 
 function drawThoughts()
-    line(0, p.y + MIN_DIST_FROM_PLAYER, 128, p.y + MIN_DIST_FROM_PLAYER, 7)
+    -- linw of top and bot of thoughts:
+    -- line(0, p.y + MIN_DIST_FROM_PLAYER, 128, p.y + MIN_DIST_FROM_PLAYER, 7)
+    -- line(0, p.y + MAX_DIST_FROM_PLAYER, 128, p.y + MAX_DIST_FROM_PLAYER, 9)
+
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
     end
@@ -728,6 +730,13 @@ function newBar()
             if bar.level < bar.max_level then
                 bar.level += 1
             end
+        end,
+
+        getNextEmptySlotXY= function()
+            local numEmpty = bar.max_level - bar.level
+            local x = bar.x + 1
+            local y = bar.y + 2 + (numEmpty-1) * 10 -- maybe not 10? but thats the pad above
+            return {x, y}
         end
 
     }
