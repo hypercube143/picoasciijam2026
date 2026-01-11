@@ -193,6 +193,7 @@ function animation(fps, fillSpeed, frames)
             spacing = 8
             currentFrame = frames[currentFrameIdx]
             layerN = 1
+            rainbowN = 0
             for layer in all(currentFrame) do
                 layerStr = layer.str
                 -- layerStr = currentFrameIdx
@@ -208,6 +209,8 @@ function animation(fps, fillSpeed, frames)
                             rainbowN = 1
                         end
                         layerCol = platformColours[rainbowN]
+                    else
+                        layerCol = 11
                     end
                 end
                 print(layerStr, 0, yMod, layerCol)
