@@ -154,18 +154,25 @@ function animationScene(anim)
         end,
         update = function()
             t += 1
+            -- start filling animation on first tick
+            if t == 1 then
+                anim.fill(2)
+            end
             anim.update(t)
             if anim.finished() then
+                CURR_SCENE = levelOne()
+            end
+            -- DEBUGGING REMOVE LATER
+            if t == (60 * 2) then
                 CURR_SCENE = levelOne()
             end
         end
     }
 end
 
-function animation(fps, layers)
+function animation(fps, frames)
     return {
         fillLevel = 0,
-        fillStarted = false,
         fillSpeed = 0, -- layers per second
         update = function(t) 
             
@@ -173,8 +180,11 @@ function animation(fps, layers)
         draw = function()
             yMod = 0
             spacing = 8
-            for layer in all(layers) do
-                print(layer, 0, yMod, 7)
+            currentFrame = frames[1]
+            for layer in all(currentFrame) do
+                layerStr = layer.str
+                layerCol = layer.colour
+                print(layerStr, 0, yMod, layerCol)
                 yMod += spacing
             end
         end,
@@ -183,15 +193,13 @@ function animation(fps, layers)
             fillSpeed = speed
         end,
         finished = function()
-            if fillLevel == #layers then
+            if fillLevel == #frames then
                 return true
             end
             return false
         end
     }
 end
-
-
 
 
 -- animation layer
@@ -348,14 +356,28 @@ function checkPlayerCollision(collidables)
                 -- del(entities, collidable)
                 if btn(❎) then
                     lastWeedCollectedWorldY = collidable.worldY
+                    collidable.y = -420
                     -- collidable.colour = 0
-                    idx = 1
-                    for c in all(collidables) do
-                        if c == collidable then break end
-                        idx += 1
-                    end
-                    entities[idx].y = -420
+                    -- idx = 1
+                    -- for c in all(collidables) do
+                    --     if c == collidable then break end
+                    --     idx += 1
+                    -- end
+                    -- entities[idx].y = -420
                     bar.increaseHighness()
+                    -- lerping will go here, or at least a call to the lerp function, right sap?
+                    -- after lerp, change to a random animation scene
+                    frames = {
+                        {
+                            al("layer 1", 7),
+                            al("layer 2", 7),
+                            al("layer 3", 7),
+                            al("layer 4", 7),
+                            al("layer 5", 7),
+                        }
+                    }
+                    anim = animation(12, frames)
+                    CURR_SCENE = animationScene(anim)
                 end
             end
             --
