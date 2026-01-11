@@ -148,6 +148,7 @@ end
 function animationScene(anim)
     t = 0
     return {
+        --t = 0,
         draw = function()
             anim.draw()
         end,
@@ -513,12 +514,9 @@ end
 
 
 -- global thought cloud vars
--- shiftX = 0
--- shiftY = 0
 MIN_DIST_FROM_PLAYER = 20
 
 function initThoughts()
-    --p.y + MIN_DIST_FROM_PLAYER + 5
     local y = MIN_DIST_FROM_PLAYER + 5 
     return {
         thought(30, y, 7, "get a j*b"),
@@ -529,18 +527,7 @@ function initThoughts()
     }
 end
 
--- function thought(x, y, text)
-    
---     return co(
---         x,
---         p.y + y, -- y under and relative to player
---         -1, -1,
---         {s(text, 8, 0, 0, 0, 0, "thought")},
---         "thought"
---     )
--- end
 function thought(x, y, col, text)
-    
     return{
     shiftX = 0,
     shiftY = 0,
@@ -556,16 +543,11 @@ function thought(x, y, col, text)
 end
 
 function updateThoughts()
-    
     for thot in all(thoughts) do
-        
-        if t%20 == 0 then
-            -- if not(thot.x -1  < -5 or thot.x + 1 > 125) then shiftX = (-1 + flr(rnd(2))) end -- from -1 to 1
-            -- if not(thot.y -1  < p.y + MIN_DIST_FROM_PLAYER or thot.y + 1 > 120) then shiftY = (-1 + flr(rnd(2))) end -- from -1 to 1
-
+        if t%50 == 0 then
             if thot.co.x -1 <= -5 then 
                 thot.shiftX = flr(rnd(2)) -- 0 to 1
-            elseif thot.co.x + 1 >= 128 - (#thot.text)*3 then
+            elseif thot.co.x + 1 >= 128 - (#thot.text)*4 then
                 thot.shiftX = -1 + flr(rnd(2)) -- -1 to ()
             else
                 thot.shiftX = -1 + flr(rnd(3))
@@ -589,7 +571,6 @@ end
 function drawThoughts()
     line(0, p.y + MIN_DIST_FROM_PLAYER, 128, p.y + MIN_DIST_FROM_PLAYER, 7)
     for t in all(thoughts) do
-        --t.draw(t.x, calcPlatformXPosAndWBasedOnLastPlatform(t))
         t.co.draw(t.co.x, t.co.y)
     end
 end
@@ -704,7 +685,7 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 function s(str, colour, x, y, offX, offY, id)
     local width = 8
-    if id == "thought" then width = 4*#str end
+    if id == "thought" then width = 4*#str end -- so that the hit box is the length of the string
     return {
         str = str, colour = colour,
         originalColour = colour, -- helpful for knowing which colour the platforms should go back to after flashing white when landed on
