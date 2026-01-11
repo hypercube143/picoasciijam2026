@@ -67,7 +67,7 @@ function startMenu()
 end
 
 function initLevelOne()
-    p = newPlayer(64, 80)
+    p = newPlayer(60, 80)
     bar = newBar()
     t = 0
     entities = initEntities()
@@ -85,6 +85,11 @@ function initLevelOne()
         platform.worldY = worldY
         map_tiles[#map_tiles + 1] = platform
     end
+
+    -- spawn initial weed
+    wed = weed(76, -8)
+    wed.worldY = -8
+    entities[#entities + 1] = wed
 end
 
 function levelOne()   
@@ -157,45 +162,74 @@ function animationScene(anim)
         update = function()
             t += 1
             -- start filling animation on first tick
-            if t == 1 then
-                anim.fill(2)
-            end
             anim.update(t)
+            -- DEBUGGING UNCOMMENT LATER
             if anim.finished() then
                 CURR_SCENE = levelOne()
             end
-            -- DEBUGGING REMOVE LATER
-            if t == (60 * 2) then
-                CURR_SCENE = levelOne()
-            end
+            --DEBUGGING REMOVE LATER
+            -- if t == (60 * 5) then
+            --     CURR_SCENE = levelOne()
+            -- end
         end
     }
 end
 
-function animation(fps, frames)
+rainbowN = 1
+-- fps doesn't get calculated correctly, too lazy to fix. the higher it is, the faster the animation runs
+function animation(fps, fillSpeed, frames)
+    fillLevel = 0
+    currentFrameIdx = 0 
+    rainbowMode = false
+    rainbowSpeedMod = 1
+    -- fillSpeed = 0 -- layers per second
     return {
-        fillLevel = 0,
-        fillSpeed = 0, -- layers per second
         update = function(t) 
-            
+            fillLevel = flr(t / (60 / fillSpeed))
+            if fillLevel > #frames[1] then
+                rainbowMode = true
+            end
+            rainbowFillLevel = flr((t - (#frames[1] * (60 / fillSpeed))) / (60 / (fillSpeed * rainbowSpeedMod)))
+            currentFrameIdx = (flr(t / fps) % #frames) + 1 
         end,
         draw = function()
             yMod = 0
             spacing = 8
-            currentFrame = frames[1]
+            currentFrame = frames[currentFrameIdx]
+            layerN = 1
+            rainbowN = 0
             for layer in all(currentFrame) do
                 layerStr = layer.str
-                layerCol = layer.colour
+                -- layerStr = currentFrameIdx
+                if not rainbowMode then
+                    if #currentFrame - layerN < fillLevel then
+                        layerCol = 11 -- fill up with green (potentially allow for this col to change, rainbow even?)
+                    else
+                        layerCol = layer.colour
+                    end
+                else
+                    if layerN <= rainbowFillLevel then
+                        if rainbowN > #platformColours then 
+                            rainbowN = 1
+                        end
+                        layerCol = platformColours[rainbowN]
+                    else
+                        layerCol = 11
+                    end
+                end
                 print(layerStr, 0, yMod, layerCol)
+                if true then
+                    rainbowN += 1
+                end
                 yMod += spacing
+                layerN += 1
             end
         end,
         fill = function(speed)
-            fillStarted = true
             fillSpeed = speed
         end,
         finished = function()
-            if fillLevel == #frames then
+            if rainbowFillLevel == #frames[1] then
                 return true
             end
             return false
@@ -211,17 +245,6 @@ function al(str, col)
         colour = col
     }
 end
-
-anim = animation(
-    12,
-    {
-        al("hello there", 12),
-        al("hello there", 12),
-        al("hello there", 12),
-        al("hello there", 12),
-        al("hello there", 12),
-    }
-)
 
 
 
@@ -418,14 +441,44 @@ function checkPlayerCollision(collidables)
                     -- after lerp, change to a random animation scene
                     frames = {
                         {
-                            al("layer 1", 7),
+                            al("layer 1 frame 1", 7),
                             al("layer 2", 7),
                             al("layer 3", 7),
                             al("layer 4", 7),
                             al("layer 5", 7),
-                        }
+                            al("layer 6", 7),
+                            al("layer 7", 7),
+                            al("layer 8", 7),
+                            al("layer 9", 7),
+                            al("layer 10", 7),
+                            al("layer 11", 7),
+                            al("layer 12", 7),
+                            al("layer 13", 7),
+                            al("layer 14", 7),
+                            al("layer 15", 7),
+                            al("layer 16", 7),
+                        },
+                        {
+                            al("layer 1 frame 2", 7),
+                            al("layer 2", 7),
+                            al("layer 3", 7),
+                            al("layer 4", 7),
+                            al("layer 5", 7),
+                            al("layer 6", 7),
+                            al("layer 7", 7),
+                            al("layer 8", 7),
+                            al("layer 9", 7),
+                            al("layer 10", 7),
+                            al("layer 11", 7),
+                            al("layer 12", 7),
+                            al("layer 13", 7),
+                            al("layer 14", 7),
+                            al("layer 15", 7),
+                            al("layer 16", 7),
+                        },
+
                     }
-                    anim = animation(12, frames)
+                    anim = animation(20, 16, frames)
                     CURR_SCENE = animationScene(anim)
                 end
             end
