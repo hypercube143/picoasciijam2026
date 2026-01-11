@@ -134,6 +134,71 @@ function levelOne()
     }
 end
 
+function animationScene(anim)
+    t = 0
+    return {
+        draw = function()
+            anim.draw()
+        end,
+        update = function()
+            t += 1
+            anim.update(t)
+            if anim.finished() then
+                CURR_SCENE = levelOne()
+            end
+        end
+    }
+end
+
+function animation(fps, layers)
+    return {
+        fillLevel = 0,
+        fillStarted = false,
+        fillSpeed = 0, -- layers per second
+        update = function(t) 
+            
+        end,
+        draw = function()
+            yMod = 0
+            spacing = 8
+            for layer in all(layers) do
+                print(layer, 0, yMod, 7)
+                yMod += spacing
+            end
+        end,
+        fill = function(speed)
+            fillStarted = true
+            fillSpeed = speed
+        end,
+        finished = function()
+            if fillLevel == #layers then
+                return true
+            end
+            return false
+        end
+    }
+end
+
+anim = animation(
+    12,
+    {
+        al("hello there", 12),
+        al("hello there", 12),
+        al("hello there", 12),
+        al("hello there", 12),
+        al("hello there", 12),
+    }
+)
+
+
+-- animation layer
+function al(str, col)
+    return {
+        str = str,
+        colour = col
+    }
+end
+
 function drawPlatforms()
     for collidable in all(map_tiles) do
         worldY = getCoYFromPlayerWorldY(collidable)
