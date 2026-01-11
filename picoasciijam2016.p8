@@ -72,11 +72,7 @@ function initLevelOne()
     t = 0
     entities = initEntities()
     thoughts = initThoughts()
-end
 
-function levelOne()
-    -- init occurs once level is loaded, hence no funciton:
-    
     for i = 1, 5, 1 do
         map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
     end
@@ -88,7 +84,9 @@ function levelOne()
         platform.worldY = worldY
         map_tiles[#map_tiles + 1] = platform
     end
-    
+end
+
+function levelOne()   
     return{
         update = function()
             p.update()
@@ -140,7 +138,7 @@ function levelOne()
             if lastWeed then
                 --debug = debug .. tostr(lastWeed.worldY)
                 debug = debug .. tostr(#entities)
-            end           
+            end 
         end
     }
 end
