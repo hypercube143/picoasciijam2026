@@ -97,7 +97,7 @@ function levelOne()
         update = function()
             p.update()
             t += 1
-            
+            bar.update()
             updateThoughts()
             updateLerpingWeeds()
             attemptPlatformCreation(t)
@@ -125,7 +125,7 @@ function levelOne()
             -- DEBUGGING UNCOMMENT LATER
             -- toCorrupt()
             ---
-            --debug = debug .."tick: " .. t
+            debug = debug .."tick: " .. t
 
             
             -- draw corruption every frame, update every 10th
@@ -235,7 +235,6 @@ end
 
 upBtnJustPressed = false
 function movePlayer(colliders)
-
     -- check whether player touching platform
     touchingPlatform = false
     platform = nil 
@@ -243,6 +242,7 @@ function movePlayer(colliders)
         if collider.id == "platform" then
             touchingPlatform = true
             platform = collider
+            
         end
     end
 
@@ -301,6 +301,8 @@ function movePlayer(colliders)
             p.worldY -= p.gravity
         end
     end
+
+    
 end
 
 lastWeedCollectedWorldY = -1
@@ -580,7 +582,17 @@ function newBar()
         y = 0,
         level = 2,
         max_level = 10,
-        update = function() end,
+        tAtIncrease = 0,
+        update = function() 
+            -- may need to work around the t rollover...
+            local timeUntilDecrease = 800
+            if t - bar.tAtIncrease > timeUntilDecrease then
+                bar.level = bar.level - 1
+                bar.tAtIncrease = t
+                -- and instead of just delete it - flash the centre green :p
+            end
+        end,
+
         draw = function() 
             -- grey background
             pad = 10
@@ -593,21 +605,38 @@ function newBar()
                     drawGlyphWithBorder("★", 3, "★", 11, bar.x, 2 + bar.y + i*pad)
                 end
             end
+            local highest = bar.max_level - bar.level
+            local one = t - bar.tAtIncrease > 400 and t - bar.tAtIncrease < 450
+            local two = t - bar.tAtIncrease > 500 and t - bar.tAtIncrease < 550
+            local three = t - bar.tAtIncrease > 600 and t - bar.tAtIncrease < 625
+            local four = t - bar.tAtIncrease > 650 and t - bar.tAtIncrease < 675
+            local five = t - bar.tAtIncrease > 700 and t - bar.tAtIncrease < 725
+            local six = t - bar.tAtIncrease > 750 and t - bar.tAtIncrease < 775
+            if one or two or three or four or five or six then 
+                drawGlyphWithBorder("★", 3, "★", 5, bar.x, 2 + bar.y + highest*pad)
+            end
         end,
 
         increaseHighness = function()
             if bar.level < bar.max_level then
                 bar.level += 1
             end
+            bar.tAtIncrease = t
         end,
 
-        getNextEmptySlotXY= function()
+        getNextEmptySlotXY = function()
             local numEmpty = bar.max_level - bar.level
             local x = bar.x + 1
             local y = bar.y + 2 + (numEmpty-1) * 10 -- maybe not 10? but thats the pad above
             return {x, y}
-        end
+        end,
 
+        -- tickForSoberness = function()
+        --     -- may need to work around the t rollover...
+        --     if t - bar.tAtIncrease > 50 then
+        --         bar.level = bar.level - 1
+        --     end
+        -- end
     }
 end
 
