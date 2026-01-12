@@ -289,7 +289,7 @@ function drawLerpingWeeds()
             w.draw(w.x, w.y) 
         end  
    end
-   debug = "num todel: " .. #toDelete .. " num lerp: " .. #lerpingWeeds
+   --debug = "num todel: " .. #toDelete .. " num lerp: " .. #lerpingWeeds
 end
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
