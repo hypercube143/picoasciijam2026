@@ -21,6 +21,7 @@ glyph is 6x5
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- DEBUG THINGS
 debug = "debug: "
+debugMode = false
 debugCollisions = false
 debugWorldYLevels = false
 
@@ -28,6 +29,7 @@ debugWorldYLevels = false
 t = 0
 --entities = {} -- eg collidable
 map_tiles = {} -- eg collidable
+totalWeedRips = 68
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MAIN GAME FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -38,14 +40,14 @@ end
 
 function _update60()
    CURR_SCENE.update()
-   print(debug, 2, 2, 7)
+   if debugMode then print(debug, 2, 2, 7) end
 end
 
 function _draw()
     cls()
     debug = "debug: "
     CURR_SCENE.draw()
-    print(debug, 2, 2, 7)
+    if debugMode then print(debug, 2, 2, 7) end
 
 end
 
@@ -140,6 +142,9 @@ function levelOne()
             drawThoughts()
 
             drawLerpingWeeds()
+
+            -- displayPlatformsClimbedText()
+            displayTotalWeedCollected(t)
 
             debug = debug .. tostr(#entities)           
             
@@ -325,6 +330,7 @@ function checkPlayerCollision(collidables)
                 if btn(❎) then
                     lastWeedCollectedWorldY = collidable.worldY
 
+                    totalWeedRips += 1
                     
                     --startLerpingWeed()
                     local screenY = getCoYFromPlayerWorldY(collidable)
@@ -710,6 +716,45 @@ function drawCorruption()
     end
 end
 
+
+-- function displayPlatformsClimbedText()
+--     text = (platformTotalCount - 10) .. " scaled"
+--     print(text, getXToCentreTextToScreen(text), 16, 7)
+-- end
+
+wdfps = 5 -- weed display fps (for when rainbow)
+function displayTotalWeedCollected(ticks)
+    text = totalWeedRips .. " rips"
+    
+    -- cycle thru rainbow colours if 69 or 420
+    if totalWeedRips == 69 or totalWeedRips == 420 then
+        rainbow = true
+        col = platformColours[(flr(t / (60 / wdfps)) % #platformColours) + 1]
+    else
+        rainbow = false
+        col = 7
+    end
+    
+    x = getXToCentreTextToScreen(text)
+    y = 8
+
+    if rainbow then -- draw border if rainbow
+        for xOff = -1, 1 do
+            for yOff = -1, 1 do
+                print(text, x + xOff, y + yOff, 7) -- white border
+            end
+        end
+    end
+
+    print(text, x, y, col)
+end
+
+function getXToCentreTextToScreen(text)
+    centreSceenX = 127 / 2.0
+    textPxLen = #text * 4
+    newPos = centreSceenX - (textPxLen / 2.0)
+    return newPos
+end
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- COLLISION OBJECT THINGS
