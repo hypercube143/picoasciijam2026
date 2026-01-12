@@ -72,6 +72,7 @@ function initLevelOne()
     t = 0
     entities = initEntities()
     thoughts = initThoughts()
+    lerpingWeeds = {}
 
     for i = 1, 5, 1 do
         map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
@@ -98,6 +99,7 @@ function levelOne()
             t += 1
             
             updateThoughts()
+            updateLerpingWeeds()
             attemptPlatformCreation(t)
             attemptToSpawnWeed()
             -- delete any platforms & entities (weed) which move far below screen
@@ -137,6 +139,8 @@ function levelOne()
             drawEntities()
             drawThoughts()
 
+            drawLerpingWeeds()
+
             debug = debug .. tostr(#entities)           
             
             --lastWeed = entities[#entities]
@@ -163,6 +167,39 @@ function drawPlatforms()
         end
     end
 end
+
+toDelete = {}
+function updateLerpingWeeds()
+    barWorldX, barWorldY = unpack(bar.getNextEmptySlotXY())
+    toDelete = {}
+    if #lerpingWeeds > 0 then
+        for w in all(lerpingWeeds) do
+             w.x = lerp(w.x, barWorldX, 0.2)
+             w.y = lerp(w.y, barWorldY, 0.2)
+            local dist = 0.5
+            if abs(w.x - barWorldX) < dist and abs(w.y - barWorldY) < dist then
+                w.x = barWorldX
+                w.y = barWorldY
+                add(toDelete, w)
+                bar.increaseHighness()
+            end
+        end  
+   end
+   for d in all(toDelete) do del(lerpingWeeds, d) end
+   toDelete = {}
+end
+
+function drawLerpingWeeds()
+    if #lerpingWeeds > 0 then
+        for w in all(lerpingWeeds) do
+            -- worldY = getCoYFromPlayerWorldY(w)
+            -- w.draw(w.x, worldY)     
+            w.draw(w.x, w.y) 
+        end  
+   end
+   --debug = "num todel: " .. #toDelete .. " num lerp: " .. #lerpingWeeds
+end
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- PLAYER FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -285,7 +322,16 @@ function checkPlayerCollision(collidables)
                 -- del(entities, collidable)
                 if btn(❎) then
                     lastWeedCollectedWorldY = collidable.worldY
+
+                    
+                    --startLerpingWeed()
+                    local screenY = getCoYFromPlayerWorldY(collidable)
+                    local w = weed(collidable.x, screenY)
+                    if #lerpingWeeds <1 then add(lerpingWeeds, w) end -- why am i getting 10 ir 11 in this tbale uhhh
+                    --del(entities, collidable)
                     collidable.y = -420
+
+
                     -- collidable.colour = 0
                     -- idx = 1
                     -- for c in all(collidables) do
@@ -293,7 +339,11 @@ function checkPlayerCollision(collidables)
                     --     idx += 1
                     -- end
                     -- entities[idx].y = -420
-                    bar.increaseHighness()
+
+
+                    -- bar.increaseHighness()
+
+
                     -- lerping will go here, or at least a call to the lerp function, right sap?
                     -- after lerp, change to a random animation scene
                     
@@ -457,7 +507,7 @@ end
 
 -- global thought cloud vars
 MIN_DIST_FROM_PLAYER = 20
-
+MAX_DIST_FROM_PLAYER = MIN_DIST_FROM_PLAYER + 25
 function initThoughts()
     local y = MIN_DIST_FROM_PLAYER + 5 
     return {
@@ -497,7 +547,7 @@ function updateThoughts()
 
             if thot.co.y -1 <= (p.y + MIN_DIST_FROM_PLAYER) then 
                 thot.shiftY = flr(rnd(2))
-            elseif thot.co.y +1 >= 120 then
+            elseif thot.co.y +1 >= (p.y + MAX_DIST_FROM_PLAYER) then
                 thot.shiftY = -1 + flr(rnd(2))
             else
                 thot.shiftY = -1 + flr(rnd(3))
@@ -511,7 +561,10 @@ function updateThoughts()
 end
 
 function drawThoughts()
-    line(0, p.y + MIN_DIST_FROM_PLAYER, 128, p.y + MIN_DIST_FROM_PLAYER, 7)
+    -- linw of top and bot of thoughts:
+    -- line(0, p.y + MIN_DIST_FROM_PLAYER, 128, p.y + MIN_DIST_FROM_PLAYER, 7)
+    -- line(0, p.y + MAX_DIST_FROM_PLAYER, 128, p.y + MAX_DIST_FROM_PLAYER, 9)
+
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
     end
@@ -546,6 +599,13 @@ function newBar()
             if bar.level < bar.max_level then
                 bar.level += 1
             end
+        end,
+
+        getNextEmptySlotXY= function()
+            local numEmpty = bar.max_level - bar.level
+            local x = bar.x + 1
+            local y = bar.y + 2 + (numEmpty-1) * 10 -- maybe not 10? but thats the pad above
+            return {x, y}
         end
 
     }
