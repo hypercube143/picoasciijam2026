@@ -19,6 +19,10 @@ glyph is 6x5
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- GLOBALS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- global thought cloud vars
+THOUGHT_MIN_DIST_FROM_PLAYER = 30
+THOUGHT_MAX_DIST_FROM_PLAYER = 30 + 25
+
 -- DEBUG THINGS
 debug = "debug: "
 debugMode = false
@@ -40,7 +44,8 @@ function _init()
 end
 
 function _update60()
-   CURR_SCENE.update()
+    if CURR_SCENE.t != nil then CURR_SCENE.t += 1 end
+    CURR_SCENE.update()
 end
 
 function _draw()
@@ -48,7 +53,6 @@ function _draw()
     debug = "debug: "
     CURR_SCENE.draw()
     if debugMode then print(debug, 2, 2, 7) end
-
 end
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -169,6 +173,17 @@ function levelOne()
     }
 end
 
+function deathScreen()
+    return{
+        t = 0, -- resets as 0 whenever deathSCreen called?
+        update = function()
+            if btnp(❎) then CURR_SCENE = startMenu() end
+        end,
+        draw = function()
+            print("u fell to ur death </3\n*animation plays*\n\npress x", 2, 2, 7)
+        end
+    }
+end
 
 
 
@@ -253,9 +268,27 @@ function newPlayer(x, y)
             end
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
             -- p.spr.collisionCheck(weed_tree)
+            checkPlayerFalling()
         end
     }
 end
+
+function checkPlayerFalling()
+    local lowestPlat = map_tiles[1]
+
+
+    -- thoughts rise as player falls, maybe add more thoughts as it rises so that it fills the screen.
+    if p.worldY < lowestPlat.y then
+        local diff = abs(p.worldY - lowestPlat.y)
+        THOUGHT_MIN_DIST_FROM_PLAYER += diff*10
+
+    end
+
+    if p.worldY < (lowestPlat.y - 50) then 
+        --initLevelOne() -- here or somewhere else, like if go back to start menu
+        CURR_SCENE = deathScreen()
+    end
+end 
 
 upBtnJustPressed = false
 function movePlayer(colliders)
@@ -578,11 +611,9 @@ function weed(x, y)
 end
 
 
--- global thought cloud vars
-MIN_DIST_FROM_PLAYER = 20
-MAX_DIST_FROM_PLAYER = MIN_DIST_FROM_PLAYER + 25
+
 function initThoughts()
-    local y = MIN_DIST_FROM_PLAYER + 5 
+    local y = THOUGHT_MIN_DIST_FROM_PLAYER + 5 
     return {
         thought(30, y, 7, "get a j*b"),
         thought(30, y, 7, "literal idiot >:("),
@@ -618,9 +649,9 @@ function updateThoughts()
                 thot.shiftX = -1 + flr(rnd(3))
             end
 
-            if thot.co.y -1 <= (p.y + MIN_DIST_FROM_PLAYER) then 
+            if thot.co.y -1 <= (p.y + THOUGHT_MIN_DIST_FROM_PLAYER) then 
                 thot.shiftY = flr(rnd(2))
-            elseif thot.co.y +1 >= (p.y + MAX_DIST_FROM_PLAYER) then
+            elseif thot.co.y +1 >= (p.y + THOUGHT_MAX_DIST_FROM_PLAYER) then
                 thot.shiftY = -1 + flr(rnd(2))
             else
                 thot.shiftY = -1 + flr(rnd(3))
