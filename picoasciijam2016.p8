@@ -172,14 +172,14 @@ function levelOne()
     }
 end
 
-function deathScreen()
+function deathScreen(msg)
     return{
         t = 0, -- resets as 0 whenever deathSCreen called?
         update = function()
             if btnp(❎) then CURR_SCENE = startMenu() end
         end,
         draw = function()
-            print("u fell to ur death </3\n*animation plays*\n\npress x", 2, 2, 7)
+            print(msg .. "\n*animation plays*\n\npress x", 2, 2, 7)
         end
     }
 end
@@ -272,14 +272,14 @@ function checkPlayerFalling()
     -- thoughts rise as player falls, maybe add more thoughts as it rises so that it fills the screen.
     if p.worldY < lowestPlat.y then
         local diff = abs(p.worldY - lowestPlat.y)
-        THOUGHT_MIN_DIST_FROM_PLAYER += diff*10
+        THOUGHT_MIN_DIST_FROM_PLAYER -= diff*10
 
     end
 
-    if p.worldY < (lowestPlat.y - 50) then 
-        --initLevelOne() -- here or somewhere else, like if go back to start menu
-        CURR_SCENE = deathScreen()
-    end
+--     if p.worldY < (lowestPlat.y - 50) then 
+--         --initLevelOne() -- here or somewhere else, like if go back to start menu
+--         CURR_SCENE = deathScreen("you fell to your death </3")
+--     end
 end 
 
 upBtnJustPressed = false
