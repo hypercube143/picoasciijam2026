@@ -25,7 +25,7 @@ THOUGHT_MAX_DIST_FROM_PLAYER = 30 + 25
 
 -- DEBUG THINGS
 debug = "debug: "
-debugMode = false
+debugMode = true
 debugCollisions = false
 debugWorldYLevels = false
 
@@ -33,7 +33,8 @@ debugWorldYLevels = false
 t = 0
 --entities = {} -- eg collidable
 map_tiles = {} -- eg collidable
-totalWeedRips = 68
+obstacles = {}
+totalWeedRips = 0
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MAIN GAME FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -45,7 +46,6 @@ end
 function _update60()
     if CURR_SCENE.t != nil then CURR_SCENE.t += 1 end
     CURR_SCENE.update()
-    if debugMode then print(debug, 2, 2, 7) end
 end
 
 function _draw()
@@ -107,10 +107,12 @@ function levelOne()
             updateThoughts()
             updateLerpingWeeds()
             attemptPlatformCreation(t)
+            updateObstacles()
             attemptToSpawnWeed()
             -- delete any platforms & entities (weed) which move far below screen
             despawnOutOfRangeCollidables(map_tiles, 200)
             despawnOutOfRangeCollidables(entities, 200)
+            despawnOutOfRangeCollidables(obstacles, 200)
            
             -- checkPlayerCollision(map_tiles)
             -- checkPlayerCollision(entities)
@@ -131,17 +133,18 @@ function levelOne()
             -- DEBUGGING UNCOMMENT LATER
             -- toCorrupt()
             ---
-            debug = debug .."tick: " .. t
+            -- debug = debug .."tick: " .. t
 
             
             -- draw corruption every frame, update every 10th
             -- if t % 10 == 0 then
-            --     updateCorruption(t * 0.0025)
+            --     updateCorruption(t * 0.0025)t % 6
             -- end
             -- drawCorruption()
 
             -- draw all map tile collidables
             drawPlatforms()
+            drawObstacles()
             drawEntities()
             drawThoughts()
 
@@ -149,13 +152,21 @@ function levelOne()
 
             -- displayPlatformsClimbedText()
             displayTotalWeedCollected(t)
-
-            debug = debug .. tostr(#entities)           
+            
+            -- o = obstacles[1]
+            -- if o then
+            --     debug = debug .. "obstacle: " .. o.x .. ", " .. o.y
+            -- end
+            for o in all(obstacles) do
+                debug = debug .. o.x .. ", " .. o.y .. " (" .. o.worldY .. ")\n"
+            end
+            debug = debug .. #obstacles
+            -- debug = debug .. tostr(#entities) 
             
             --lastWeed = entities[#entities]
             if lastWeed then
                 --debug = debug .. tostr(lastWeed.worldY)
-                debug = debug .. tostr(#entities)
+                -- debug = debug .. tostr(#entities)
             end 
         end
     }
@@ -609,6 +620,40 @@ function drawThoughts()
     end
 end
 
+shootingStarFallingSpeed = 1
+-- spawn obstacles
+-- update their positions
+-- delete if they touch a platform
+function updateObstacles()
+    if (t + 59) % 60 == 0 then -- 1 every second
+        x = (flr(rnd(14)) + 1) * 8
+        shootingStar = co(x, 0, 0, 0, {s("✽", 7, 0, 0, 0, 0, "shooting_star")}, "shooting_star")
+        shootingStar.x = x
+        shootingStar.worldY = p.worldY + platformSpawnHeight
+        add(obstacles, shootingStar)
+    end
+    for obstacle in all(obstacles) do
+        if true then -- obstacle.id == "shooting_star" then
+            obstacle.worldY -= shootingStarFallingSpeed
+            -- despawn if touching a platform
+            for collidable in all(map_tiles) do
+                if collidable.id == "platform" then
+                    if collidable.collisionCheck(obstacle) then
+                        -- shooting star death animation
+                        -- del(obstacles, obstacle)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function drawObstacles()
+    for o in all(obstacles) do
+        y = getCoYFromPlayerWorldY(o)
+        o.draw(o.x, y)
+    end
+end
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- GAME THINGS
@@ -902,20 +947,26 @@ end
 -- ANIMATIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+animationSceneLetGoOfXBtn = false
 function animationScene(anim)
-    t = 0
+    animT = 0
     return {
         --t = 0,
         draw = function()
             anim.draw()
+            text = "press x to skip"
+            print(text, getXToCentreTextToScreen(text), 112, 7)
         end,
         update = function()
-            t += 1
+            animT += 1
             -- start filling animation on first tick
-            anim.update(t)
+            anim.update(animT)
             -- DEBUGGING UNCOMMENT LATER
-            if anim.finished() then
+            if anim.finished() or (btn(❎) and animationSceneLetGoOfXBtn) then
                 CURR_SCENE = levelOne()
+            end
+            if not btn(❎) then
+                animationSceneLetGoOfXBtn = true
             end
             --DEBUGGING REMOVE LATER
             -- if t == (60 * 5) then
