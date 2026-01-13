@@ -25,7 +25,7 @@ THOUGHT_MAX_DIST_FROM_PLAYER = 30 + 25
 
 -- DEBUG THINGS
 debug = "debug: "
-debugMode = true
+debugMode = false
 debugCollisions = false
 debugWorldYLevels = false
 
@@ -145,6 +145,7 @@ function levelOne()
             -- draw all map tile collidables
             drawPlatforms()
             drawObstacles()
+            -- draw obstacles doesn't seem to be working elsewhere for some reason?????/
             drawEntities()
             drawThoughts()
 
@@ -258,6 +259,13 @@ function newPlayer(x, y)
             checkPlayerCollision(entities)
             tileColliders = checkPlayerCollision(map_tiles) -- potentially have these return values to inform below gravity logic
             movePlayer(tileColliders)
+            -- kill player if they're hit by a shooting star
+            obsColliders = checkPlayerCollision(obstacles)
+            for obs in all(obsColliders) do
+                if obs.id == "shooting_star" then
+                    -- player dies here
+                end
+            end
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
             -- p.spr.collisionCheck(weed_tree)
             checkPlayerFalling()
@@ -521,6 +529,52 @@ function despawnOutOfRangeCollidables(tabl, threshold)
     end
 end
 
+shootingStarFallingSpeed = 1
+-- spawn obstacles
+-- update their positions
+-- delete if they touch a platform
+function updateObstacles()
+    if (t + 59) % 60 == 0 then -- 1 every second
+        x = (flr(rnd(14)) + 1) * 8
+        shootingStar = co(x, 0, 0, 0, {s("✽", 7, 0, 0, 0, 0, "shooting_star")}, "shooting_star")
+        shootingStar.x = x
+        shootingStar.worldY = p.worldY + platformSpawnHeight
+        -- shootingStar.y = worldY
+        add(obstacles, shootingStar)
+    end
+    for obstacle in all(obstacles) do
+        if true then -- obstacle.id == "shooting_star" then
+            obstacle.worldY -= shootingStarFallingSpeed
+            -- despawn if touching a platform
+            -- for collidable in all(map_tiles) do
+            --     if collidable.id == "platform" then
+            --         if collidable.collisionCheck(obstacle) then
+            --             -- shooting star death animation
+            --             -- del(obstacles, obstacle)
+            --         end
+            --     end
+            -- end
+        end
+    end
+end
+
+function drawObstacles()
+    shootingStarTrailSpeed = 5
+    for o in all(obstacles) do
+        -- y = getCoYFromPlayerWorldY(o)
+        y = p.worldY - o.worldY-- - o.y + p.y
+        o.draw(o.x, y)
+        ymod = y
+        tmod = 0
+        
+        for i = 1, 5, 1 do
+            ymod -= 8
+            print("#", o.x + (sin(tmod + (t / (360 / shootingStarTrailSpeed))) * 5), ymod, 13)
+            tmod += 0.3
+        end
+    end
+end
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ENTITY THINGS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -617,41 +671,6 @@ function drawThoughts()
 
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
-    end
-end
-
-shootingStarFallingSpeed = 1
--- spawn obstacles
--- update their positions
--- delete if they touch a platform
-function updateObstacles()
-    if (t + 59) % 60 == 0 then -- 1 every second
-        x = (flr(rnd(14)) + 1) * 8
-        shootingStar = co(x, 0, 0, 0, {s("✽", 7, 0, 0, 0, 0, "shooting_star")}, "shooting_star")
-        shootingStar.x = x
-        shootingStar.worldY = p.worldY + platformSpawnHeight
-        add(obstacles, shootingStar)
-    end
-    for obstacle in all(obstacles) do
-        if true then -- obstacle.id == "shooting_star" then
-            obstacle.worldY -= shootingStarFallingSpeed
-            -- despawn if touching a platform
-            for collidable in all(map_tiles) do
-                if collidable.id == "platform" then
-                    if collidable.collisionCheck(obstacle) then
-                        -- shooting star death animation
-                        -- del(obstacles, obstacle)
-                    end
-                end
-            end
-        end
-    end
-end
-
-function drawObstacles()
-    for o in all(obstacles) do
-        y = getCoYFromPlayerWorldY(o)
-        o.draw(o.x, y)
     end
 end
 
@@ -963,6 +982,7 @@ function animationScene(anim)
             anim.update(animT)
             -- DEBUGGING UNCOMMENT LATER
             if anim.finished() or (btn(❎) and animationSceneLetGoOfXBtn) then
+                animationSceneLetGoOfXBtn = false
                 CURR_SCENE = levelOne()
             end
             if not btn(❎) then
