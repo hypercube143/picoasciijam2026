@@ -138,7 +138,7 @@ function levelOne()
 
         end,
         draw = function()
-            drawGrid("❎", "♥")
+            -- drawGrid("❎", "♥")
             
             
 
