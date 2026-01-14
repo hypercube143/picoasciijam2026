@@ -77,18 +77,22 @@ function initLevelOne()
     bar = newBar()
     t = 0
     entities = initEntities()
-    thoughts = initThoughts()
+    thoughts = initThoughts() -- 4 initial thoughts, max is 50
     lerpingWeeds = {}
+    listOfThoughts = {"you are nothing", "you are a failure", "everything you do sucks", "stop smoking weed bro", "broke", "she took the kids",
+        "the debt collectors are coming", "freak"
+    }
 
-    -- UNCOMMENT THIS VERSION:
-    -- for i = 1, 5, 1 do
-    --     map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
-    -- end
+
+ 
+    for i = 1, 5, 1 do
+        map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
+    end
 
     -- tEMP:
-    for i = 1, 5, 1 do
-        map_tiles[i] = platformCo(8, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
-    end
+    -- for i = 1, 5, 1 do
+    --     map_tiles[i] = platformCo(8, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
+    -- end
     --
 
         -- generate initial platforms
@@ -281,13 +285,26 @@ function newPlayer(x, y)
     }
 end
 
-listOfThoughts = {"aaa", "bbb", "ccc", "ddd", "eee", "fff"}
+-- listOfThoughts = {"you are nothing", "bbb", "ccc", "ddd", "eee", "fff"}
 function checkPlayerFalling()
     local lowestPlat = map_tiles[1]
+    local secondLowestPlat = map_tiles[2]
 
+    if p.worldY < secondLowestPlat.y then
+        if #thoughts < 50 then 
+            local thot = listOfThoughts[1+flr(rnd(#listOfThoughts))]
+            -- del(listOfThoughts, thot) -- ad listOfThoughts to lvl1 init
+            local x = flr(rnd(129)) 
+            local y = 128
+            add(thoughts, thought(x, y, 7, thot))
+        end
+    end
 
     -- thoughts rise as player falls, maybe add more thoughts as it rises so that it fills the screen.
     if p.worldY < lowestPlat.y then
+
+        
+
         --local diff = abs(p.worldY - lowestPlat.y)
         if THOUGHT_MIN_DIST_FROM_PLAYER > -80 then
             THOUGHT_MIN_DIST_FROM_PLAYER -= 1
@@ -299,23 +316,24 @@ function checkPlayerFalling()
             for th in all(thoughts) do
                 --if t%10 == 0 then th.co.y -= 1 end
                 if thing%2 == 0 then
-                    th.co.y -= 1
-                else
                     th.co.y -= 0.5
+                else
+                    th.co.y -= 0.1
                 end
                 thing += 1
 
 
-            if #thoughts < 50 then 
-                local thot = listOfThoughts[1+flr(rnd(#listOfThoughts))]
-                -- del(listOfThoughts, thot) -- ad listOfThoughts to lvl1 init
-                local x = flr(rnd(129))
-                local y = 128
-                add(thoughts, thought(x, y, 7, thot))
-            end
+            -- if #thoughts < 50 then 
+            --     local thot = listOfThoughts[1+flr(rnd(#listOfThoughts))]
+            --     -- del(listOfThoughts, thot) -- ad listOfThoughts to lvl1 init
+            --     local x = flr(rnd(129))
+            --     local y = 128
+            --     add(thoughts, thought(x, y, 7, thot))
+            -- end
             
+            end
         end
-        end
+        
     end
     if p.worldY < (lowestPlat.y - 300) then 
         --initLevelOne() -- here or somewhere else, like if go back to start menu
@@ -708,8 +726,8 @@ end
 
 function drawThoughts()
     -- linw of top and bot of thoughts:
-    line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
-    line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
+    --line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
+    --line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
 
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
