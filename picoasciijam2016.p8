@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 41
+version 43
 __lua__
 --1337 420 8)
 -- vorp
@@ -79,14 +79,26 @@ function initLevelOne()
     totalWeedRips = 0
     lastWeedCollectedWorldY = -420
     entities = initEntities()
-    thoughts = initThoughts()
     map_tiles = {}
     obstacles = {}
+    thoughts = initThoughts() -- 4 initial thoughts, max is 50
     lerpingWeeds = {}
+    listOfThoughts = {"you are nothing", "you are a failure", "everything you do sucks", "stop smoking weed bro", "broke", "she took the kids",
+        "the debt collectors are coming", "freak"
+    }
 
+
+ 
     for i = 1, 5, 1 do
         map_tiles[i] = platformCo(0, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
     end
+
+    -- tEMP:
+    -- for i = 1, 5, 1 do
+    --     map_tiles[i] = platformCo(8, -16 - (8 * (i-1)), 16, 11) -- base platform player starts on (could this be a unique co later on? perhaps a nice grassy hill area?)
+    -- end
+    --
+
         -- generate initial platforms
     for i = 1, 5, 1 do
         x, w = unpack(calcPlatformXPosAndWBasedOnLastPlatform())
@@ -180,14 +192,14 @@ function levelOne()
     }
 end
 
-function deathScreen()
+function deathScreen(msg)
     return{
         t = 0, -- resets as 0 whenever deathSCreen called?
         update = function()
             if btnp(❎) then CURR_SCENE = startMenu() end
         end,
         draw = function()
-            print("u fell to ur death </3\n*animation plays*\n\npress x", 2, 2, 7)
+            print(msg .. "\n*animation plays*\n\npress x", 2, 2, 7)
         end
     }
 end
@@ -280,22 +292,70 @@ function newPlayer(x, y)
     }
 end
 
+-- listOfThoughts = {"you are nothing", "bbb", "ccc", "ddd", "eee", "fff"}
 function checkPlayerFalling()
     local lowestPlat = map_tiles[1]
+    local secondLowestPlat = map_tiles[2]
 
+    if p.worldY < secondLowestPlat.y then
+        if #thoughts < 50 then 
+            local thot = listOfThoughts[1+flr(rnd(#listOfThoughts))]
+            -- del(listOfThoughts, thot) -- ad listOfThoughts to lvl1 init
+            local x = flr(rnd(129)) 
+            local y = 128
+            add(thoughts, thought(x, y, 7, thot))
+        end
+    end
 
     -- thoughts rise as player falls, maybe add more thoughts as it rises so that it fills the screen.
     if p.worldY < lowestPlat.y then
-        local diff = abs(p.worldY - lowestPlat.y)
-        THOUGHT_MIN_DIST_FROM_PLAYER += diff*10
 
+        
+
+        --local diff = abs(p.worldY - lowestPlat.y)
+        if THOUGHT_MIN_DIST_FROM_PLAYER > -80 then
+            THOUGHT_MIN_DIST_FROM_PLAYER -= 1
+        end
+        
+        -- stop increasing once highest thought reaches 0
+        if getHighestThought().co.y > 0 then
+            local thing = 0
+            for th in all(thoughts) do
+                --if t%10 == 0 then th.co.y -= 1 end
+                if thing%2 == 0 then
+                    th.co.y -= 0.5
+                else
+                    th.co.y -= 0.1
+                end
+                thing += 1
+
+
+            -- if #thoughts < 50 then 
+            --     local thot = listOfThoughts[1+flr(rnd(#listOfThoughts))]
+            --     -- del(listOfThoughts, thot) -- ad listOfThoughts to lvl1 init
+            --     local x = flr(rnd(129))
+            --     local y = 128
+            --     add(thoughts, thought(x, y, 7, thot))
+            -- end
+            
+            end
+        end
+        
     end
-
-    if p.worldY < (lowestPlat.y - 50) then 
+    if p.worldY < (lowestPlat.y - 300) then 
         --initLevelOne() -- here or somewhere else, like if go back to start menu
-        CURR_SCENE = deathScreen()
+        CURR_SCENE = deathScreen("you fell to your death </3")
     end
 end 
+
+function getHighestThought()
+    local hi = thoughts[1]
+    for th in all(thoughts) do
+        if th.co.y < hi.co.y then hi = th end
+    end
+    return hi
+end
+
 
 upBtnJustPressed = false
 function movePlayer(colliders)
@@ -673,8 +733,8 @@ end
 
 function drawThoughts()
     -- linw of top and bot of thoughts:
-    -- line(0, p.y + MIN_DIST_FROM_PLAYER, 128, p.y + MIN_DIST_FROM_PLAYER, 7)
-    -- line(0, p.y + MAX_DIST_FROM_PLAYER, 128, p.y + MAX_DIST_FROM_PLAYER, 9)
+    --line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
+    --line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
 
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
