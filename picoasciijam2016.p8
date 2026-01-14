@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 43
+version 41
 __lua__
 --1337 420 8)
 -- vorp
@@ -31,10 +31,13 @@ debugWorldYLevels = false
 
 -- GAME THINGS
 t = 0
+startCorruptionT = 0
+corrupting = false
 --entities = {} -- eg collidable
 map_tiles = {} -- eg collidable
 obstacles = {}
 totalWeedRips = 0
+gracePeriod = true -- harmful things don't happen until the player jumps: bar doesn't decrease, shooting stars don't spawn
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MAIN GAME FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -171,7 +174,7 @@ function levelOne()
             displayTotalWeedCollected(t)
             
             -- DEBUGGING UNCOMMENT LATER
-            -- toCorrupt()
+            toCorrupt()
             
             -- o = obstacles[1]
             -- if o then
@@ -282,7 +285,7 @@ function newPlayer(x, y)
             obsColliders = checkPlayerCollision(obstacles)
             for obs in all(obsColliders) do
                 if obs.id == "shooting_star" then
-                    CURR_SCENE = deathScreen("you were crushed by a shooting star </3")
+                    CURR_SCENE = deathScreen("you were crushed by a\nshooting star </3")
                 end
             end
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
@@ -396,6 +399,11 @@ function movePlayer(colliders)
             -- p.worldY += p.speed
             p.yVel = p.jumpStr
             -- player gravity
+
+            -- deactivate grace period if not already
+            if gracePeriod then
+                gracePeriod = false
+            end
         end
     else
         -- upBtn released
@@ -600,8 +608,9 @@ shootingStarFallingSpeed = 1
 -- spawn obstacles
 -- update their positions
 -- delete if they touch a platform
+spawnStarEveryXSeconds = 2
 function updateObstacles()
-    if (t + 59) % 60 == 0 then -- 1 every second
+    if (t + 59) % (60 * spawnStarEveryXSeconds) == 0 and not gracePeriod then -- 1 every second
         x = (flr(rnd(14)) + 1) * 8
         shootingStar = co(x, 0, 0, 0, {s("✽", 7, 0, 0, 0, 0, "shooting_star")}, "shooting_star")
         shootingStar.x = x
@@ -744,17 +753,18 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- GAME THINGS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+dm = 0.5 -- decrease mod
 function newBar()
     return{
         x = 120,
         y = 0,
-        level = 2,
+        level = 3,
         max_level = 10,
         tAtIncrease = 0,
         update = function() 
             -- may need to work around the t rollover...
-            local timeUntilDecrease = 800
-            if t - bar.tAtIncrease > timeUntilDecrease then
+            local timeUntilDecrease = (800 * dm)
+            if t - bar.tAtIncrease > timeUntilDecrease and not gracePeriod then
                 bar.level = bar.level - 1
                 bar.tAtIncrease = t
                 -- and instead of just delete it - flash the centre green :p
@@ -774,12 +784,12 @@ function newBar()
                 end
             end
             local highest = bar.max_level - bar.level
-            local one = t - bar.tAtIncrease > 400 and t - bar.tAtIncrease < 450
-            local two = t - bar.tAtIncrease > 500 and t - bar.tAtIncrease < 550
-            local three = t - bar.tAtIncrease > 600 and t - bar.tAtIncrease < 625
-            local four = t - bar.tAtIncrease > 650 and t - bar.tAtIncrease < 675
-            local five = t - bar.tAtIncrease > 700 and t - bar.tAtIncrease < 725
-            local six = t - bar.tAtIncrease > 750 and t - bar.tAtIncrease < 775
+            local one = t - bar.tAtIncrease > 400 * dm and t - bar.tAtIncrease < 450 * dm
+            local two = t - bar.tAtIncrease > 500 * dm and t - bar.tAtIncrease < 550 * dm
+            local three = t - bar.tAtIncrease > 600 * dm and t - bar.tAtIncrease < 625 * dm
+            local four = t - bar.tAtIncrease > 650 * dm and t - bar.tAtIncrease < 675 * dm
+            local five = t - bar.tAtIncrease > 700 * dm and t - bar.tAtIncrease < 725 * dm
+            local six = t - bar.tAtIncrease > 750 * dm and t - bar.tAtIncrease < 775 * dm
             if one or two or three or four or five or six then 
                 drawGlyphWithBorder("★", 3, "★", 5, bar.x, 2 + bar.y + highest*pad)
             end
@@ -810,13 +820,20 @@ end
 
 -- draw corruption every frame, update every 10th
 -- should only happen on threshold reached
+corruptionSpeed = 0.0005
 function toCorrupt()
-    -- 5 weeds to bar and flash
+    -- 5 weeds to bar and flashtoCorrupt
     if bar.level <= 2 then 
+        if not corrupting then
+            corrupting = true
+            startCorruptionT = t
+        end
         if t % 10 == 0 then
-            updateCorruption(t * 0.0025)
-         end
+            updateCorruption((t - startCorruptionT) * corruptionSpeed)
+        end
         drawCorruption()
+    else
+        corrupting = false
     end
 end
 
@@ -927,7 +944,7 @@ function s(str, colour, x, y, offX, offY, id)
     if id == "thought" then width = 4*#str end -- so that the hit box is the length of the string
     -- if id == "head" then width = 5; height = 5 end
     -- if id == "body" then width = 1; height = 1 end
-    if id == "shooting_star" then width = 1; height = 1 end
+    if id == "shooting_star" then width = 4; height = 4 end
     return {
         str = str, colour = colour,
         originalColour = colour, -- helpful for knowing which colour the platforms should go back to after flashing white when landed on
