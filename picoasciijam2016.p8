@@ -76,8 +76,12 @@ function initLevelOne()
     p = newPlayer(60, 80)
     bar = newBar()
     t = 0
+    totalWeedRips = 0
+    lastWeedCollectedWorldY = -420
     entities = initEntities()
     thoughts = initThoughts()
+    map_tiles = {}
+    obstacles = {}
     lerpingWeeds = {}
 
     for i = 1, 5, 1 do
@@ -131,7 +135,7 @@ function levelOne()
             --weed_tree.draw(90, 90)
             bar.draw()
             -- DEBUGGING UNCOMMENT LATER
-            -- toCorrupt()
+            
             ---
             -- debug = debug .."tick: " .. t
 
@@ -153,6 +157,9 @@ function levelOne()
 
             -- displayPlatformsClimbedText()
             displayTotalWeedCollected(t)
+            
+            -- DEBUGGING UNCOMMENT LATER
+            -- toCorrupt()
             
             -- o = obstacles[1]
             -- if o then
@@ -263,7 +270,7 @@ function newPlayer(x, y)
             obsColliders = checkPlayerCollision(obstacles)
             for obs in all(obsColliders) do
                 if obs.id == "shooting_star" then
-                    -- player dies here
+                    CURR_SCENE = deathScreen("you were crushed by a shooting star </3")
                 end
             end
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
@@ -569,7 +576,7 @@ function drawObstacles()
         
         for i = 1, 5, 1 do
             ymod -= 8
-            print("#", o.x + (sin(tmod + (t / (360 / shootingStarTrailSpeed))) * 5), ymod, 13)
+            print("▒", o.x + (sin(tmod + (t / (360 / shootingStarTrailSpeed))) * 5), ymod, 13)
             tmod += 0.3
         end
     end
@@ -856,12 +863,16 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 function s(str, colour, x, y, offX, offY, id)
     local width = 8
+    local height = 8
     if id == "thought" then width = 4*#str end -- so that the hit box is the length of the string
+    -- if id == "head" then width = 5; height = 5 end
+    -- if id == "body" then width = 1; height = 1 end
+    if id == "shooting_star" then width = 1; height = 1 end
     return {
         str = str, colour = colour,
         originalColour = colour, -- helpful for knowing which colour the platforms should go back to after flashing white when landed on
         --w = 8, h = 8,
-        w = width, h = 8,
+        w = width, h = height,
         x = x, y = y,
         offX = offX, offY = offY,
         globalX = x, globalY = y,
