@@ -20,6 +20,7 @@ glyph is 6x5
 -- GLOBALS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- global thought cloud vars
+ORIGINAL_THOUGHT_MIN_DIST_FROM_PLAYER = 30
 THOUGHT_MIN_DIST_FROM_PLAYER = 30
 THOUGHT_MAX_DIST_FROM_PLAYER = 30 + 25
 
@@ -262,6 +263,9 @@ function newPlayer(x, y)
             s("L", 6, 0, 1, -1, -1, "tail")
         }
     return{
+        highest = 0,
+        highestPlatform = -1,
+        falling = false,
         spr = co(x, y, 8, 8, texture, "player"),
         x = x,
         y = y,
@@ -269,10 +273,11 @@ function newPlayer(x, y)
         speed = 1,
         gravity = defaultPlayerGravity,
         yVel = 0,
-        decel = 0.1,
+        decel = 0.1,    
         jumpStr = 4.20, -- B) smok weed every day
         draw = function() 
             p.spr.draw(p.x, p.y)
+            print("pworldy: " .. ceil(p.worldY-16) .. " plat: " .. p.highestPlatform, 2, 2, 7)
         end,
         update = function()
             checkPlayerCollision(entities)
@@ -288,6 +293,8 @@ function newPlayer(x, y)
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
             -- p.spr.collisionCheck(weed_tree)
             checkPlayerFalling()
+            stationaryPlayerRisingThoughts()
+            movingPlayerLoweringThoughts()
         end
     }
 end
@@ -309,7 +316,7 @@ function checkPlayerFalling()
 
     -- thoughts rise as player falls, maybe add more thoughts as it rises so that it fills the screen.
     if p.worldY < lowestPlat.y then
-
+        p.falling = true
         
 
         --local diff = abs(p.worldY - lowestPlat.y)
@@ -356,6 +363,26 @@ function getHighestThought()
     return hi
 end
 
+riseSpd = 0.03
+function stationaryPlayerRisingThoughts()
+    if ceil(p.worldY - 16) <= p.highestPlatform and not(p.falling) then
+        THOUGHT_MIN_DIST_FROM_PLAYER -= riseSpd
+        for th in all(thoughts) do
+            th.co.y -= riseSpd
+        end
+    end
+end
+
+function movingPlayerLoweringThoughts()
+    if ceil(p.worldY - 16) >= p.highestPlatform and THOUGHT_MIN_DIST_FROM_PLAYER < ORIGINAL_THOUGHT_MIN_DIST_FROM_PLAYER then
+        THOUGHT_MIN_DIST_FROM_PLAYER += riseSpd*4
+        for th in all(thoughts) do
+            th.co.y += riseSpd*4
+        end
+    end
+end
+
+
 
 upBtnJustPressed = false
 function movePlayer(colliders)
@@ -396,6 +423,7 @@ function movePlayer(colliders)
             -- p.worldY += p.speed
             p.yVel = p.jumpStr
             -- player gravity
+
         end
     else
         -- upBtn released
@@ -409,6 +437,10 @@ function movePlayer(colliders)
     
     p.worldY += p.yVel
     p.yVel -= p.decel
+
+    -- setting highest point
+    if p.worldY > p.highest then p.highest = p.worldY end
+
     if p.yVel < 0 then p.yVel = 0 end
     -- apply gravity if not touching platform
     if not touchingPlatform then
@@ -479,6 +511,7 @@ function checkPlayerCollision(collidables)
             end
             --
             if collidable.id == "platform" then -- platform should be turning white when player hits it but this not the case for some reason gahhh
+                p.highestPlatform = collidable.worldY
                 for sprite in all(collidable) do
                     sprite.colour = 7
                 end
@@ -733,8 +766,8 @@ end
 
 function drawThoughts()
     -- linw of top and bot of thoughts:
-    --line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
-    --line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
+    line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
+    line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
 
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
