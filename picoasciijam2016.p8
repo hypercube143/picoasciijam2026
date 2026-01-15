@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 41
+version 43
 __lua__
 --1337 420 8)
 -- vorp
@@ -20,8 +20,9 @@ glyph is 6x5
 -- GLOBALS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- global thought cloud vars
-THOUGHT_MIN_DIST_FROM_PLAYER = 30
-THOUGHT_MAX_DIST_FROM_PLAYER = 30 + 25
+ORIGINAL_THOUGHT_MIN_DIST_FROM_PLAYER = 40
+THOUGHT_MIN_DIST_FROM_PLAYER = 40
+THOUGHT_MAX_DIST_FROM_PLAYER = 40 + 25
 
 -- DEBUG THINGS
 debug = "debug: "
@@ -63,8 +64,8 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 function startMenu()
     return{
-        update = function()
-            if btn(❎) then 
+        update = function() 
+            if btnp(❎) then 
                 initLevelOne()
                 CURR_SCENE = levelOne() 
             end
@@ -89,7 +90,7 @@ function initLevelOne()
     listOfThoughts = {"you are nothing", "you are a failure", "everything you do sucks", "stop smoking weed bro", "broke", "she took the kids",
         "the debt collectors are coming", "freak"
     }
-
+    THOUGHT_MIN_DIST_FROM_PLAYER = ORIGINAL_THOUGHT_MIN_DIST_FROM_PLAYER
 
  
     for i = 1, 5, 1 do
@@ -174,7 +175,7 @@ function levelOne()
             displayTotalWeedCollected(t)
             
             -- DEBUGGING UNCOMMENT LATER
-            toCorrupt()
+            --toCorrupt()
             
             -- o = obstacles[1]
             -- if o then
@@ -265,6 +266,10 @@ function newPlayer(x, y)
             s("L", 6, 0, 1, -1, -1, "tail")
         }
     return{
+        highest = 0,
+        lowest = 0,
+        highestPlatform = 0,
+        falling = false,
         spr = co(x, y, 8, 8, texture, "player"),
         x = x,
         y = y,
@@ -272,10 +277,13 @@ function newPlayer(x, y)
         speed = 1,
         gravity = defaultPlayerGravity,
         yVel = 0,
-        decel = 0.1,
+        decel = 0.1,    
         jumpStr = 4.20, -- B) smok weed every day
         draw = function() 
             p.spr.draw(p.x, p.y)
+            print("pworldy: " .. ceil(p.worldY-16) .. " plat: " .. p.highestPlatform, 2, 2, 7)
+            print(p.lowest .. "plow", 10, 10, 7)
+
         end,
         update = function()
             checkPlayerCollision(entities)
@@ -291,12 +299,15 @@ function newPlayer(x, y)
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
             -- p.spr.collisionCheck(weed_tree)
             checkPlayerFalling()
+            stationaryPlayerRisingThoughts()
+            movingPlayerLoweringThoughts()
         end
     }
 end
 
 -- listOfThoughts = {"you are nothing", "bbb", "ccc", "ddd", "eee", "fff"}
 function checkPlayerFalling()
+    --local lowestPlat = map_tiles[1]
     local lowestPlat = map_tiles[1]
     local secondLowestPlat = map_tiles[2]
 
@@ -312,7 +323,7 @@ function checkPlayerFalling()
 
     -- thoughts rise as player falls, maybe add more thoughts as it rises so that it fills the screen.
     if p.worldY < lowestPlat.y then
-
+        p.falling = true
         
 
         --local diff = abs(p.worldY - lowestPlat.y)
@@ -331,16 +342,6 @@ function checkPlayerFalling()
                     th.co.y -= 0.1
                 end
                 thing += 1
-
-
-            -- if #thoughts < 50 then 
-            --     local thot = listOfThoughts[1+flr(rnd(#listOfThoughts))]
-            --     -- del(listOfThoughts, thot) -- ad listOfThoughts to lvl1 init
-            --     local x = flr(rnd(129))
-            --     local y = 128
-            --     add(thoughts, thought(x, y, 7, thot))
-            -- end
-            
             end
         end
         
@@ -358,6 +359,37 @@ function getHighestThought()
     end
     return hi
 end
+
+riseSpd = 0.03
+function stationaryPlayerRisingThoughts()
+    if (ceil(p.worldY - 16) == p.highestPlatform or ceil(p.worldY) - 15 == p.highestPlatform) and not(p.falling) and not(p.worldY < 0) then
+        thoughtMovementHelper(-riseSpd)
+    -- else falling off plats but not into void:
+    elseif p.worldY < p.highestPlatform and not(p.falling) and  not(p.worldY < 0) then
+        thoughtMovementHelper(-1)
+    end
+    dieQuestionMark()
+end
+
+function movingPlayerLoweringThoughts()
+    if ceil(p.worldY - 16) > p.highestPlatform and THOUGHT_MIN_DIST_FROM_PLAYER < ORIGINAL_THOUGHT_MIN_DIST_FROM_PLAYER then
+        thoughtMovementHelper(riseSpd*4)
+    end
+end
+
+function thoughtMovementHelper(moveSpeed)
+    THOUGHT_MIN_DIST_FROM_PLAYER += moveSpeed
+    for th in all(thoughts) do
+        th.co.y += moveSpeed
+    end
+end
+
+function dieQuestionMark()
+    if p.y >= p.y + THOUGHT_MIN_DIST_FROM_PLAYER then
+        CURR_SCENE = deathScreen("you succumbed to your negative thoughts")
+    end
+end
+
 
 
 upBtnJustPressed = false
@@ -417,6 +449,11 @@ function movePlayer(colliders)
     
     p.worldY += p.yVel
     p.yVel -= p.decel
+
+    -- setting highest point
+    if p.worldY > p.highest then p.highest = p.worldY end
+    if p.worldY < p.lowest then p.lowest = p.worldY end
+
     if p.yVel < 0 then p.yVel = 0 end
     -- apply gravity if not touching platform
     if not touchingPlatform then
@@ -487,6 +524,7 @@ function checkPlayerCollision(collidables)
             end
             --
             if collidable.id == "platform" then -- platform should be turning white when player hits it but this not the case for some reason gahhh
+                if p.worldY-10 > collidable.worldY then p.highestPlatform = collidable.worldY end
                 for sprite in all(collidable) do
                     sprite.colour = 7
                 end
@@ -689,7 +727,8 @@ end
 
 
 function initThoughts()
-    local y = THOUGHT_MIN_DIST_FROM_PLAYER + 5 
+    local y = 45--THOUGHT_MIN_DIST_FROM_PLAYER + 5 
+    --local x = 0
     return {
         thought(30, y, 7, "get a j*b"),
         thought(30, y, 7, "literal idiot >:("),
@@ -742,8 +781,8 @@ end
 
 function drawThoughts()
     -- linw of top and bot of thoughts:
-    --line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
-    --line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
+    line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
+    line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
 
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
@@ -764,7 +803,7 @@ function newBar()
         update = function() 
             -- may need to work around the t rollover...
             local timeUntilDecrease = (800 * dm)
-            if t - bar.tAtIncrease > timeUntilDecrease and not gracePeriod then
+            if t - bar.tAtIncrease > timeUntilDecrease and not gracePeriod and bar.level > 0 then
                 bar.level = bar.level - 1
                 bar.tAtIncrease = t
                 -- and instead of just delete it - flash the centre green :p
@@ -790,7 +829,7 @@ function newBar()
             local four = t - bar.tAtIncrease > 650 * dm and t - bar.tAtIncrease < 675 * dm
             local five = t - bar.tAtIncrease > 700 * dm and t - bar.tAtIncrease < 725 * dm
             local six = t - bar.tAtIncrease > 750 * dm and t - bar.tAtIncrease < 775 * dm
-            if one or two or three or four or five or six then 
+            if (one or two or three or four or five or six) and not(bar.level == 0) then 
                 drawGlyphWithBorder("★", 3, "★", 5, bar.x, 2 + bar.y + highest*pad)
             end
         end,
