@@ -16,9 +16,98 @@ glyph is 6x5
 
 
 --]]
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ASCII
+------------------------------------------------------------------------------------------------------------------------------------------------------
+--[[
+Buttons
+\code - symbol - name
+
+\131 - ⬇️ - Down Key
+\139 - ⬅️ - Left Key
+\145 - ➡️ - Right Key
+\148 - ⬆️ - Up Key
+\142 - 🅾️ - O Key
+\151 - ❎ - X Key
+Symbols
+\code - symbol - name
+
+\16 - ▮ - Vertical rectangle
+\17 - ヌ∧て - Horizontal rectangle
+\18 - Horizontal half filled rectangle?
+\22 - ◀ - Back
+\23 - ▶ - Forward
+\24 -「 - Japanese starting quote
+\25 - 」- Japanese ending quote
+\28 - 、- Japanese comma
+\29 - ヌ∧ち - Small square (bigger than a pixel)
+\31 - ⁘ - Four dots
+\128 - ■ - Square
+\129 - ▒ - Checkerboard
+\132 - ░ - Dot pattern
+\134 - ● - Ball
+\143 - ◆ - Diamond
+\144 - .... - Ellipsis
+\152 - ▤ - Horizontal lines
+\153 - ▥ - Vertical lines
+Emojis
+\code - symbol - name
+
+\130 - 🐱 - Cat
+\133 - ✽ - Throwing star
+\135 - ♥ - Heart
+\136 - ☉ - Eye (kinda)
+\137 - 웃 - Man
+\138 - ⌂ - House
+\140 - 😐 - Face
+\141 - ♪ - Musical note
+\146 - ★ - Star
+\147 - ⧗ - Hourglass
+\149 - ˇˇ - Birds
+\150 - ∧∧ - Sawtooth
+--]]
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- GLOBALS
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+g = [[
+
+▤▤▤
+▤
+▤ ▤▤
+▤  ▤
+▤▤▤
+]]
+e = [[
+
+▤▤▤
+▤
+▤▤▤
+▤  
+▤▤▤
+]]
+t = [[
+
+▤▤▤
+  ▤
+  ▤
+  ▤  
+  ▤
+]]
+--t = t + "\n"
+h = [[
+
+▤ ▤
+▤ ▤
+▤▤▤
+▤ ▤  
+▤ ▤
+]]
+
+x = "press x to start"
+startMenuArt = {g,e,t,h} --t,h,i,g,h,x}
+
+
 -- global thought cloud vars
 ORIGINAL_THOUGHT_MIN_DIST_FROM_PLAYER = 40
 THOUGHT_MIN_DIST_FROM_PLAYER = 40
@@ -71,7 +160,14 @@ function startMenu()
             end
         end,
         draw = function() 
-            print("press x")
+            --print("press x")
+            local i = 1
+            for thing in all(startMenuArt) do
+                local col = platformColours[i % #platformColours]
+                print(thing, (i*(5*6))- 30, 0, col)
+                i += 1
+
+            end
         end
     }
 end
