@@ -94,7 +94,6 @@ t = [[
   ▤  
   ▤
 ]]
---t = t + "\n"
 h = [[
 
 ▤ ▤
@@ -103,9 +102,25 @@ h = [[
 ▤ ▤  
 ▤ ▤
 ]]
+i = [[
+
+★
+
+▤
+▤ 
+▤
+]]
+z = [[
+
+★
+
+▤
+▤ 
+▤
+]]
 
 x = "press x to start"
-startMenuArt = {g,e,t,h} --t,h,i,g,h,x}
+startMenuArt = {g,e,t,h,i,g, h} --t,h,i,g,h,x}
 
 
 -- global thought cloud vars
@@ -160,17 +175,34 @@ function startMenu()
             end
         end,
         draw = function() 
-            --print("press x")
-            local i = 1
-            for thing in all(startMenuArt) do
-                local col = platformColours[i % #platformColours]
-                print(thing, (i*(5*6))- 30, 0, col)
-                i += 1
-
-            end
+            drawLogo()
+            print("★★★", 5, 115, 11)
+            print("press x to start", 32, 115, 7)
+            print("★★★", 99, 115, 11)
+            p = newPlayer(60,85)
+            p.draw(50,50)
+            plat = platformCo(60,85, 3, 10)
+            plat.draw(51,98)     
         end
     }
 end
+
+function drawLogo()
+    local i = 0
+        local x = 1
+        local y = 0
+        local minMod = 30
+            for thing in all(startMenuArt) do
+                local col = platformColours[i % #platformColours+1] -- for some reason i had to do plus one else the purple didnt load?
+                print(thing, (x*(5*6))- minMod, y, col)
+                i += 1
+                x += 1
+                if i == 3 then 
+                    y = 38
+                    x = 2
+                elseif i == 5 then minMod = 44 end
+            end
+    end 
 
 function initLevelOne()
     p = newPlayer(60, 80)
@@ -377,9 +409,6 @@ function newPlayer(x, y)
         jumpStr = 4.20, -- B) smok weed every day
         draw = function() 
             p.spr.draw(p.x, p.y)
-            print("pworldy: " .. ceil(p.worldY-16) .. " plat: " .. p.highestPlatform, 2, 2, 7)
-            print(p.lowest .. "plow", 10, 10, 7)
-
         end,
         update = function()
             checkPlayerCollision(entities)
