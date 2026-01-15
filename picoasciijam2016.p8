@@ -349,6 +349,11 @@ end
 
 function drawThoughtsDeath(msg)
     print(msg,2,2,8)
+    print(thoughts[3].text, 20, 80, 7)  
+    print(thoughts[2].text, 10, 60, 7)
+    print(thoughts[1].text, 80, 70, 7)
+    p = newPlayer(60,65)
+    p.draw(60, 65)
 end
 function drawSoberDeath(msg)
     print(msg,2,2,8)
@@ -931,8 +936,8 @@ end
 
 function drawThoughts()
     -- linw of top and bot of thoughts:
-    line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
-    line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
+    --line(0, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MIN_DIST_FROM_PLAYER, 7)
+    --line(0, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 128, p.y + THOUGHT_MAX_DIST_FROM_PLAYER, 9)
 
     for t in all(thoughts) do
         t.co.draw(t.co.x, t.co.y)
