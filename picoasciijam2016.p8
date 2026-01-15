@@ -119,7 +119,7 @@ z = [[
 ▤
 ]]
 
-x = "press x to start"
+
 startMenuArt = {g,e,t,h,i,g, h} --t,h,i,g,h,x}
 
 
@@ -324,19 +324,41 @@ function levelOne()
     }
 end
 
-function deathScreen(msg)
+function deathScreen(cause, height, rips)
     return{
         t = 0, -- resets as 0 whenever deathSCreen called?
         update = function()
             if btnp(❎) then CURR_SCENE = startMenu() end
         end,
         draw = function()
-            print(msg .. "\n*animation plays*\n\npress x", 2, 2, 7)
+            drawDeath(cause, height, rips)
         end
     }
 end
 
+function drawDeath(cause, height, rips)
+    if cause == "thoughts" then drawThoughtsDeath("you succumbed to your\nnegative thoughts") 
+    elseif cause == "sobriety" then drawSoberDeath("you got too sober man")
+    elseif cause == "star" then drawStarDeath("you were crushed by a\nshooting star </3")
+    elseif cause == "falling" then drawFallingDeath("the void ate you")
+    end
+    print("the highest you got: " .. height, 2, 30, 12)
+    print("amount of stars consumed: " .. rips, 2, 40, 11)
+    print("press x to continue", 2, 115, 7)
+end
 
+function drawThoughtsDeath(msg)
+    print(msg,2,2,8)
+end
+function drawSoberDeath(msg)
+    print(msg,2,2,8)
+end
+function drawStarDeath(msg)
+    print(msg,2,2,8)
+end
+function drawFallingDeath(msg)
+    print(msg,2,2,8)
+end
 
 
 function drawPlatforms()
@@ -418,7 +440,7 @@ function newPlayer(x, y)
             obsColliders = checkPlayerCollision(obstacles)
             for obs in all(obsColliders) do
                 if obs.id == "shooting_star" then
-                    CURR_SCENE = deathScreen("you were crushed by a\nshooting star </3")
+                    CURR_SCENE = deathScreen("star", p.highest, totalWeedRips)
                 end
             end
             -- check if player colliding - potentially make this a list and for loop later? DONE IN LEVEL_ONE
@@ -473,7 +495,7 @@ function checkPlayerFalling()
     end
     if p.worldY < (lowestPlat.y - 300) then 
         --initLevelOne() -- here or somewhere else, like if go back to start menu
-        CURR_SCENE = deathScreen("you fell to your death </3")
+        CURR_SCENE = deathScreen("falling", p.highest, totalWeedRips)
     end
 end 
 
@@ -487,7 +509,10 @@ end
 
 riseSpd = 0.03
 function stationaryPlayerRisingThoughts()
-    if (ceil(p.worldY - 16) == p.highestPlatform or ceil(p.worldY) - 15 == p.highestPlatform) and not(p.falling) and not(p.worldY < 0) then
+
+    local dist = abs((p.worldY - 16) - p.highestPlatform)
+    if dist < 2 and not p.falling and p.worldY >= 0 then -- seems to be more lenient than below?
+    --if (ceil(p.worldY - 16) == p.highestPlatform or ceil(p.worldY) - 15 == p.highestPlatform) and not(p.falling) and not(p.worldY < 0) then
         thoughtMovementHelper(-riseSpd)
     -- else falling off plats but not into void:
     elseif p.worldY < p.highestPlatform and not(p.falling) and  not(p.worldY < 0) then
@@ -511,7 +536,7 @@ end
 
 function dieQuestionMark()
     if p.y >= p.y + THOUGHT_MIN_DIST_FROM_PLAYER then
-        CURR_SCENE = deathScreen("you succumbed to your negative thoughts")
+        CURR_SCENE = deathScreen("thoughts", p.highest, totalWeedRips)
     end
 end
 
@@ -931,7 +956,7 @@ function newBar()
             if t - bar.tAtIncrease > timeUntilDecrease and not gracePeriod and bar.level > 0 then
                 bar.level = bar.level - 1
                 bar.tAtIncrease = t
-                -- and instead of just delete it - flash the centre green :p
+                if bar.level <= 0 then CURR_SCENE = deathScreen("sobriety", p.highest, totalWeedRips) end
             end
         end,
 
@@ -972,13 +997,6 @@ function newBar()
             local y = bar.y + 2 + (numEmpty-1) * 10 -- maybe not 10? but thats the pad above
             return {x, y}
         end,
-
-        -- tickForSoberness = function()
-        --     -- may need to work around the t rollover...
-        --     if t - bar.tAtIncrease > 50 then
-        --         bar.level = bar.level - 1
-        --     end
-        -- end
     }
 end
 
